@@ -11,6 +11,11 @@
       "name": "dev-flow",
       "source": "./plugins/dev-flow",
       "description": "Drive one large, multi-phase or multi-PR change end to end — plan, execute task-by-task with a live ledger, ship per PR, and resume cleanly across sessions. Works in any repo that has a .claude/dev-flow-context.md."
+    },
+    {
+      "name": "dependency-audit",
+      "source": "./plugins/dependency-audit",
+      "description": "Audit dependencies for known vulnerabilities and outdated packages across npm/pnpm/yarn, Go, Python, and Cargo; produces a prioritized, read-only remediation report."
     }
   ]
 }

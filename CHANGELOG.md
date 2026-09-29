@@ -4,6 +4,14 @@ All notable changes to this repo are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/); this repo is pre-1.0, so
 minor/patch semantics are loose while it's greenfield.
 
+## [Unreleased]
+
+### Added
+- **dependency-audit** plugin — read-only audit of dependencies for known vulnerabilities (CVEs) and
+  outdated packages across npm/pnpm/yarn, Go, Python, and Cargo, producing a prioritized remediation
+  report. Tool-driven (native audit tools) and token-conscious (summarizes tool output via `jq`, never
+  dumps raw JSON).
+
 ## [0.1.0]
 
 First public release of the `claude-code-skills` marketplace.
