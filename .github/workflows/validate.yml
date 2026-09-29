@@ -1,0 +1,57 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Dependency-free structural checks — the reliable gate.
+      - name: Validate marketplace + plugin manifests
+        run: |
+          set -euo pipefail
+          echo "::group::marketplace.json"
+          jq empty .claude-plugin/marketplace.json
+          echo "OK: marketplace.json is valid JSON"
+          echo "::endgroup::"
+
+          fail=0
+          # Every plugin listed in the marketplace must resolve and match its own manifest.
+          count=$(jq '.plugins | length' .claude-plugin/marketplace.json)
+          for i in $(seq 0 $((count - 1))); do
+            name=$(jq -r ".plugins[$i].name" .claude-plugin/marketplace.json)
+            src=$(jq -r ".plugins[$i].source" .claude-plugin/marketplace.json)
+            echo "::group::plugin: $name ($src)"
+            manifest="$src/.claude-plugin/plugin.json"
+            if [ ! -f "$manifest" ]; then
+              echo "::error::missing manifest at $manifest"; fail=1; echo "::endgroup::"; continue
+            fi
+            jq empty "$manifest" || { echo "::error::invalid JSON: $manifest"; fail=1; }
+            mname=$(jq -r '.name' "$manifest")
+            [ "$mname" = "$name" ] || { echo "::error::name mismatch: marketplace '$name' vs plugin '$mname'"; fail=1; }
+            # Each skill needs SKILL.md with name + description frontmatter.
+            if [ -d "$src/skills" ]; then
+              while IFS= read -r skill; do
+                grep -q '^name:' "$skill"        || { echo "::error::$skill missing 'name:'"; fail=1; }
+                grep -q '^description:' "$skill" || { echo "::error::$skill missing 'description:'"; fail=1; }
+                echo "OK: $skill"
+              done < <(find "$src/skills" -name SKILL.md)
+            fi
+            echo "::endgroup::"
+          done
+          exit $fail
+
+      # Official validator — best effort (does not fail the build if the CLI can't run headless).
+      - name: claude plugin validate --strict (best effort)
+        continue-on-error: true
+        run: |
+          set -eo pipefail
+          npm install -g @anthropic-ai/claude-code >/dev/null 2>&1 || { echo "CLI install skipped"; exit 0; }
+          for p in plugins/*/; do
+            echo "::group::validate $p"; claude plugin validate --strict "$p" || true; echo "::endgroup::"
+          done
