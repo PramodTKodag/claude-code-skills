@@ -41,6 +41,19 @@ To try a plugin without a marketplace:
 claude --plugin-dir ./plugins/dev-flow
 ```
 
+### Manual install (no plugin system)
+
+Copy the skill and its agents into your personal Claude Code dirs:
+
+```bash
+git clone https://github.com/PramodTKodag/claude-code-skills.git
+cp -R claude-code-skills/plugins/dev-flow/skills/dev-flow ~/.claude/skills/
+cp claude-code-skills/plugins/dev-flow/agents/*.md ~/.claude/agents/
+```
+
+Copying only the skill folder (without `agents/`) leaves the subagent-driven mode without its
+workers — copy both, or use the marketplace/`--plugin-dir` methods above.
+
 ## Using `dev-flow`
 
 `dev-flow` is repo-agnostic — the workflow is shared, and each repo keeps its specifics in a
