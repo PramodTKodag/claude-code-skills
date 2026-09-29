@@ -21,10 +21,8 @@ More will be added over time.
 This repo is a **plugin marketplace**. Add it once, then install the plugins you want.
 
 ```bash
-# Add the marketplace (from a local clone…)
-claude plugin marketplace add ~/Projects/Personal/claude-code-skills
-#   …or, once it's on GitHub:
-# claude plugin marketplace add <your-org>/claude-code-skills
+# Add this marketplace
+claude plugin marketplace add PramodTKodag/claude-code-skills
 
 # Install a plugin
 claude plugin install dev-flow@claude-code-skills
@@ -39,7 +37,8 @@ In an interactive session you can also use the `/plugin` panel, or the slash equ
 To try a plugin without a marketplace:
 
 ```bash
-claude --plugin-dir ~/Projects/Personal/claude-code-skills/plugins/dev-flow
+# from a clone of this repo:
+claude --plugin-dir ./plugins/dev-flow
 ```
 
 ## Using `dev-flow`
