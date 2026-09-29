@@ -84,9 +84,10 @@ repo. **At Step 0, read it before anything else.** It defines, for this repo:
 - **Conditional triggers** — repo-specific skills that fire only when the diff calls for them.
 - **Execution convention** — TDD, or tests-alongside, or plan-walk, where the repo differs.
 
-If `.claude/dev-flow-context.md` is missing, **stop and ask the teammate** to create it (see the template in
-[references/dev-flow-reference.md](references/dev-flow-reference.md) › **Context-file template**) — do not
-guess a repo's stack or guardrails.
+If `.claude/dev-flow-context.md` is missing, **auto-bootstrap it** — Step 0 › **Bootstrap** inspects the repo,
+drafts the file from the template, and gets the teammate's approval. Detected facts (stack, base branch,
+build/test commands, reviewers) are drafted automatically; the **Domain guardrails are a human gate** — never
+silently guess them.
 
 ## Operating contract (baked into every stage)
 
@@ -201,7 +202,8 @@ the issue's final PR merges** (issue closed) — the work is no longer in-flight
 
 ## Step 0 — Resume or start
 
-First read **`.claude/dev-flow-context.md`** (this repo's profile — Context section above). Then resolve the
+First read **`.claude/dev-flow-context.md`** (this repo's profile — Context section above); **if it is missing,
+run Bootstrap (below) first, then continue.** Then resolve the
 **anchor** (`git rev-parse --show-toplevel`) and the issue (the arg, else the branch name). **Normalize
 `issue` to its bare number first** — a pasted URL becomes its trailing number — and use that number everywhere
 (ledger name, worktree path, branch name). Then look in the anchor for `docs/plans/<issue>-progress.md` and the
@@ -212,6 +214,28 @@ resume — do NOT re-grill, re-plan, or re-ask the execution choices** (honor th
 Map the ledger's `Status` to an entry point via the **resume map** in
 [references/dev-flow-reference.md](references/dev-flow-reference.md); its `Next` line is authoritative —
 execute it. Otherwise (no ledger) start fresh at Step 1.
+
+### Bootstrap — draft the context file (first run in a new repo)
+
+Run this only when `.claude/dev-flow-context.md` does not exist. Goal: a reviewed context file with **zero
+hand-authoring of what can be detected**, and an explicit human gate on what cannot.
+
+1. **Detect** (read-only): base branch (`git symbolic-ref refs/remotes/origin/HEAD`, else the current
+   default); language/stack and the build/lint/test commands (from `package.json`, `Makefile`, `go.mod`,
+   `Cargo.toml`, `pyproject.toml`, CI config, etc.); existing reviewers in `.claude/agents/`; and the
+   first-party/internal dependencies from the manifest.
+2. **Draft** `.claude/dev-flow-context.md` from the template
+   ([references/dev-flow-reference.md](references/dev-flow-reference.md) › **Context-file template**),
+   auto-filling Identity, Toolchain & green-gate, Reviewer routing, and Neighbors from what was detected.
+3. **Human gate on guardrails.** Leave **Domain guardrails (SECURITY)** as a marked section and **ask the
+   teammate** to confirm or fill it — these inject as acceptance criteria and cannot be reliably inferred. Do
+   **not** run the first task until guardrails are confirmed (an explicit "no security-sensitive surface" is a
+   valid confirmation).
+4. **Approve & write.** Present the draft via `AskUserQuestion` (caveman); on approval, write the file and
+   continue to Step 1. On request, revise and re-present.
+
+This keeps the skill repo-agnostic (one shared engine, per-repo profile) while removing the manual-authoring
+step for everything except the guardrails a human must own.
 
 ## Step 1 — Anchor & access
 
