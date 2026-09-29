@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "claude-code-skills",
+  "description": "A personal, open-source collection of Claude Code plugins and skills for real-world software engineering.",
+  "owner": {
+    "name": "Pramod Kodag",
+    "email": "pramodkodag.dev@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "dev-flow",
+      "source": "./plugins/dev-flow",
+      "description": "Drive one large, multi-phase or multi-PR change end to end — plan, execute task-by-task with a live ledger, ship per PR, and resume cleanly across sessions. Works in any repo that has a .claude/dev-flow-context.md."
+    }
+  ]
+}

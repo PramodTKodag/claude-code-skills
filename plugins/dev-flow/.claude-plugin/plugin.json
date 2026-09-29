@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin.json",
+  "name": "dev-flow",
+  "displayName": "Dev Flow",
+  "version": "0.1.0",
+  "description": "Drive one large, multi-phase or multi-PR change end to end — plan, execute task-by-task with a live ledger, ship per PR, and resume cleanly across sessions.",
+  "author": {
+    "name": "Pramod Kodag",
+    "email": "pramodkodag.dev@gmail.com"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "workflow",
+    "planning",
+    "tdd",
+    "code-review",
+    "git",
+    "pull-request",
+    "multi-pr",
+    "orchestration"
+  ]
+}
