@@ -43,13 +43,17 @@ claude --plugin-dir ./plugins/dev-flow
 
 ## Using `dev-flow`
 
-`dev-flow` is repo-agnostic. To use it in a project, add a **per-repo context file** that
-tells it the repo's identity, base branch, security guardrails, toolchain, and reviewers:
+`dev-flow` is repo-agnostic — the workflow is shared, and each repo keeps its specifics in a
+`.claude/dev-flow-context.md` (identity, base branch, security guardrails, toolchain, reviewers).
 
-1. Copy [`plugins/dev-flow/examples/dev-flow-context.example.md`](plugins/dev-flow/examples/dev-flow-context.example.md)
-   to `.claude/dev-flow-context.md` in your repo.
-2. Fill in the real values (keep it lean — it loads on every run).
-3. Run `/dev-flow <issue-number>` (add `--worktree` to run in an isolated git worktree).
+**First run auto-bootstraps it.** In a repo with no context file, dev-flow inspects the repo, drafts
+`.claude/dev-flow-context.md` (stack, base branch, build/test commands, reviewers), and asks you to confirm
+the **security guardrails** — the one part it won't guess. Approve it and it continues.
+
+Prefer to write it by hand? Copy
+[`plugins/dev-flow/examples/dev-flow-context.example.md`](plugins/dev-flow/examples/dev-flow-context.example.md)
+to `.claude/dev-flow-context.md` and fill it in. Either way, then run `/dev-flow <issue-number>` (add
+`--worktree` to run in an isolated git worktree).
 
 The security/domain guardrails you write are treated as **acceptance criteria** and injected
 into every subagent dev-flow spawns.
