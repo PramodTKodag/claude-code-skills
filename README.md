@@ -1,5 +1,9 @@
 # claude-code-skills
 
+[![Release](https://img.shields.io/github/v/release/PramodTKodag/claude-code-skills?sort=semver)](https://github.com/PramodTKodag/claude-code-skills/releases)
+[![License](https://img.shields.io/github/license/PramodTKodag/claude-code-skills)](LICENSE)
+[![Validate](https://github.com/PramodTKodag/claude-code-skills/actions/workflows/validate.yml/badge.svg)](https://github.com/PramodTKodag/claude-code-skills/actions/workflows/validate.yml)
+
 A personal, open-source collection of [Claude Code](https://code.claude.com) plugins and
 skills for real-world software engineering. Install what you want; each plugin is
 self-contained.
