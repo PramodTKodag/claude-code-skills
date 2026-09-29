@@ -17,6 +17,7 @@ self-contained.
 | Plugin | What it does |
 | ------ | ------------ |
 | [`dev-flow`](plugins/dev-flow) | Drive one large, multi-phase or multi-PR change end to end — plan → execute task-by-task with a live ledger → ship per PR → resume cleanly across sessions. |
+| [`dependency-audit`](plugins/dependency-audit) | Read-only audit of dependencies for known vulnerabilities (CVEs) and outdated packages across npm/pnpm/yarn, Go, Python, and Cargo → prioritized remediation report. |
 
 More will be added over time.
 

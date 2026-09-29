@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin.json",
+  "name": "dependency-audit",
+  "displayName": "Dependency Audit",
+  "version": "0.1.0",
+  "description": "Audit a project's dependencies for known vulnerabilities and outdated packages across npm/pnpm/yarn, Go, Python, and Cargo, and produce a prioritized read-only remediation report.",
+  "author": {
+    "name": "Pramod Kodag",
+    "email": "pramodkodag.dev@gmail.com"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "dependencies",
+    "security",
+    "vulnerabilities",
+    "cve",
+    "supply-chain",
+    "audit",
+    "outdated",
+    "npm",
+    "go",
+    "python",
+    "cargo"
+  ]
+}
