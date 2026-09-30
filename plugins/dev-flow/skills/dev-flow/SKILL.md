@@ -64,7 +64,7 @@ holding every stage to the Engineering charter (in
 The binding for a change too big for a single commit or PR: **anchor on the repo → read the real code across
 it and its neighbors → grill → plan in phases → execute task-by-task with a live ledger → ship per PR → resume
 cleanly if paused.** This skill is a **router and bookkeeper** — it does not re-implement `/grill-me`,
-`/writing-plans`, `/tdd`, `/review-feedback`, or `/ship`; it sequences them, holds cross-session memory, and
+`/writing-plans`, `/tdd`, or `/review-feedback`; it sequences them, holds cross-session memory, and
 enforces the gates. **You are the only agent the teammate talks to.**
 
 Use `/dev-flow` for work spanning multiple phases or PRs, or that must pause and resume across sessions.
@@ -163,7 +163,8 @@ performs that step inline itself. If you use [Superpowers](https://github.com/ob
   this repo's **Reviewer routing** (context file).
 - **`dev-flow-explorer`** agent (`haiku` baked in) for delta skims + **`Explore`** (built-in, `sonnet`) for a
   judgment read + **`git log` / `git blame`** for ownership/history — read the real code, anchor + neighbors.
-- **`/ship`** — opens the PR. **Never merges** here (see Rules).
+- **Opening the PR** — the manager does it itself (`git push` + `gh pr create`) after the **PR gate**
+  (Step 5), so the flow never stalls on a separate user-invoked PR skill. **Never merges** (see Rules).
 - **`/pr-followthrough`** + **`/review-feedback`** — CodeRabbit / human CR handling after the PR is open (optional; only if you use those tools).
 - **Recaps** — resume recap and every phase recap written **inline, short and plain** (no external skill).
 - **`github-voice`**, **`validation-reporting`**, **`finding-discipline`** — comment voice, report shape,
@@ -408,9 +409,15 @@ Walk the plan phase by phase (with `/executing-plans` checkpoints when chosen). 
 - **Oversized-phase check — ask only if it grew.** If a phase's actual diff outgrew a reviewably small PR (many
   files, several hundred+ lines, or mixed concerns), **stop and ask the teammate once** (`AskUserQuestion`)
   whether to split it into more than one PR before opening — otherwise proceed on the Step 4 grouping.
-  Normal-sized phases: no ask, just ship.
-- After the PR's phase(s): **short recap** → **approval gate** → on approval, **`/ship`** opens the PR (never
-  merge). Sync the ledger and refresh the memory pointer with the new PR stack.
+  Normal-sized phases: no split ask; go to the PR gate.
+- **PR gate — ask, then open it yourself.** After the PR's phase(s): **short recap**, then ask
+  (`AskUserQuestion`, plain words, recommended pick marked) whether to open the PR and in what mode:
+  - **Ready PR** — recommended when the gates are green and nothing sits under "Not validated".
+  - **Draft PR** — recommended when a "Not validated" gap or an open finding remains.
+  - **Hold** — no PR yet; set the ledger `Status` to `awaiting-approval` with the open-PR step as `Next`.
+  On Ready or Draft: `git push -u origin <branch>`, then `gh pr create --base <base branch, or the parent PR's
+  branch when stacked> --title … --body …` in the house format (**Naming & message formats**), adding
+  `--draft` for Draft. Never merge. Sync the ledger and refresh the memory pointer with the new PR stack.
 - **Between PRs — reset context, keep state (multi-PR flows only).** Once the PR is open and the ledger +
   memory pointer are synced, that stretch of conversation is spent — the ledger holds every decision and the
   `Next` line. For a **multi-PR** flow, tell the teammate: *"PR shipped, ledger saved — run `/clear`, then
@@ -481,7 +488,7 @@ validation gaps are merge blockers (PRINCIPLES), so name them, never imply cover
   until the teammate confirms the full migration (every consumer) has landed.
 - **One writer for the ledger** (the manager). Subagents report inline; no per-agent status files.
 - **Resume, never redo.** On a warm start, continue from the ledger; do not re-grill or re-plan.
-- **Delegate, don't duplicate.** If `/tdd`, `/writing-plans`, `/ship`, or `/review-feedback` covers a step,
+- **Delegate, don't duplicate.** If `/tdd`, `/writing-plans`, or `/review-feedback` covers a step,
   hand off with the issue/PR number.
 
 ## Final report
