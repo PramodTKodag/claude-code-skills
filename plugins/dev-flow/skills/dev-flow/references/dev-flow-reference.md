@@ -11,6 +11,7 @@ toolchain, green-gate commands, reviewer routing, conditional triggers) lives in
 - Merge strategy
 - Ledger template
 - Naming & message formats
+- Second model (swappable)
 - Context-file template (how to onboard a repo)
 
 ## Engineering charter
@@ -74,6 +75,7 @@ point; keep them current.
 # <svc> #<issue> — <title>
 
 Anchor: <repo>   Neighbors (read-only): <list>
+Tier: <1|2|3> — <one-line reason>
 Execution: <tdd|executing-plans|tests-alongside> · <subagent-driven|inline>
 PRs: <grouping settled in Step 4 — e.g. "PR1 = phases 1-3 · PR2 = phase 4", or "one PR per phase", or "single PR">
 Status: Phase <n>/<N> · Task <t> · <in-progress|blocked|awaiting-approval|PR-open·awaiting-CR|all-phases-shipped>
@@ -130,6 +132,33 @@ One house format for branches, commits, and PRs so the stack reads cleanly and a
   - **Issue** — `Closes #<issue>` only on the PR completing the issue; `Refs #<issue>` on earlier ones.
   No cross-service refs, no Claude/Anthropic attribution.
 
+## Second model (swappable)
+
+An independent second model, bound by **role**. All roles are agent-run (no teammate action). The default
+binding is the [Codex plugin for Claude Code](https://github.com/openai/codex-plugin-cc) when it is installed;
+otherwise every role runs on the fallback below.
+
+| Role | Binding | Model / effort | Trigger |
+| ---- | ------- | -------------- | ------- |
+| `diff-review` | Codex companion `review --base origin/<base>` via Bash | Codex default model and effort | Every PR, before push |
+| `plan-review` | Codex companion `task --fresh --effort high "<prompt>"` (read-only by default — never pass `--write`); prompt: "Adversarially review this implementation plan: <plan file path>. Check it against these security invariants: <the issue's invariants>. Find design flaws, missing abuse cases, and invariant breaks. Report P0/P1 only with reasons. Do not edit files." | Codex default model, effort high | Tier 3 only, before plan approval |
+| `rescue` | `codex:codex-rescue` agent, given the failing test + a ruled-out list | Codex default model, effort high | After 2 failed fix attempts on the same problem |
+
+- **Companion path:** first resolve the latest `~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs`
+  with `ls`, then run `node <that exact path> …` (no command substitution).
+- **Fallback** if the binding is not installed, unavailable, or out of quota: a fresh-context Claude subagent
+  doing the same role (`opus` for Tier 3). Whenever a role runs on the fallback, say so in the report and
+  ledger: "second-model review skipped — fallback used, not independent".
+- **Advisory:** act on P0/P1 only; log the rest in the ledger as a short summary, not a dump. Security findings
+  follow the existing hard-stop rules.
+- **Disagreement:** if Claude and the second model disagree on a P0/P1 or any security point, don't resolve it
+  yourself — surface both views to the teammate with a recommendation.
+- To replace the second model, edit only this table.
+- The second model never commits, pushes, merges, or edits guardrails — it returns findings or file edits; the
+  manager or teammate commits.
+- Before committing any second-model file edits, check them against the repo's own conventions (naming,
+  terminology, comment rules) — Claude Code hooks don't run on edits another tool makes.
+
 ## Context-file template (how to onboard a repo)
 
 To use `/dev-flow` in a repo, add `.claude/dev-flow-context.md` following this shape. Keep it LEAN — it loads
@@ -147,9 +176,16 @@ verbatim and injected into every subagent.**
 - Execution convention: TDD | tests-alongside | plan-walk (only if it differs from the default TDD).
 
 ## Domain guardrails (SECURITY — acceptance criteria, applied verbatim)
-- <the repo's hard rules — key-material / self-custody / on-chain / protocol invariants, as applicable>.
+Guardrails: AGENTS.md › <section names>   ← pointer form; omit this line to use the inline list below
+### Extra locks (not in AGENTS.md)
+- <rules only this file holds>
+- (Inline form, no pointer line: list the repo's hard rules here instead — authn/authz, key material, data
+  handling, protocol invariants, as applicable.)
 - A change that would weaken any of these is a HARD STOP.
 - (If the repo has no security-sensitive surface, state that explicitly so nothing is copy-pasted in.)
+
+## Tier 3 paths
+- <paths whose changes are always Tier 3 — e.g. auth/, crypto/, payments/> (or "none")
 
 ## Toolchain & green-gate commands
 - Build / lint / test / security-scan commands for this stack, and the ONE full-checkpoint sequence.
