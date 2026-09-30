@@ -52,7 +52,7 @@ Copy the skill and its agents into your personal Claude Code dirs:
 
 ```bash
 git clone https://github.com/PramodTKodag/claude-code-skills.git
-cp -R claude-code-skills/plugins/dev-flow/skills/dev-flow ~/.claude/skills/
+cp -R claude-code-skills/plugins/dev-flow/skills/* ~/.claude/skills/
 cp claude-code-skills/plugins/dev-flow/agents/*.md ~/.claude/agents/
 ```
 
@@ -74,7 +74,30 @@ to `.claude/dev-flow-context.md` and fill it in. Either way, then run `/dev-flow
 `--worktree` to run in an isolated git worktree).
 
 The security/domain guardrails you write are treated as **acceptance criteria** and injected
-into every subagent dev-flow spawns.
+into every subagent dev-flow spawns. If your repo already keeps them in `AGENTS.md`, the context
+file can point to those sections (`Guardrails: AGENTS.md › <sections>`) instead of copying them.
+
+### How a run flows
+
+- **Risk tiers.** Each issue gets Tier 1 (docs/tests/UI), 2 (business logic), or 3
+  (security-critical: auth, keys/crypto, payments, permissions, or paths you list). Tier 3 adds
+  an Opus executor, an adversarial plan review, and full re-verification of security facts.
+- **One plan gate.** Planning runs in plan mode, so nothing is edited before you approve. With
+  the `opusplan` model setting, planning runs on Opus and execution on Sonnet.
+- **Ledger, not a live todo list.** Progress lives in `docs/plans/<issue>-progress.md`, which
+  survives `/clear` and lets a fresh session resume exactly where the last one stopped.
+- **Hand off from an investigation.** After you root-cause something, run `/impl-issue` in that
+  session. It files an issue with SHA-pinned verified facts; `/dev-flow <issue>` in a fresh
+  session then skips re-reading paths that haven't changed since.
+
+### Second model (optional)
+
+dev-flow can use an independent second model for three roles: a diff review before every push,
+an adversarial plan review on Tier 3, and a rescue after two failed attempts. If the
+[Codex plugin](https://github.com/openai/codex-plugin-cc) is installed it uses Codex; otherwise
+a fresh Claude subagent does the job and the report says it wasn't independent. The second
+model never commits, pushes, or merges. To swap in another model, edit the **Second model**
+table in `skills/dev-flow/references/dev-flow-reference.md`.
 
 ### Composed skills (optional)
 

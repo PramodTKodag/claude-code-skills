@@ -17,11 +17,25 @@
 
 ## Domain guardrails (SECURITY — acceptance criteria, applied verbatim)
 
-- List this repo's hard rules — authn/authz, key material, data handling, protocol/on-chain
-  invariants, public-API compatibility, whatever must never regress.
+Guardrails: AGENTS.md › Security Rules, Domain Invariants
+
+> Pointer form (above): dev-flow reads the named `AGENTS.md` sections fresh on every run, so
+> the rules live in one place. Delete the pointer line to use the inline form instead and
+> list the rules below.
+
+### Extra locks (not in AGENTS.md)
+
+- Rules only this file holds — or, in inline form, this repo's hard rules: authn/authz, key
+  material, data handling, protocol/on-chain invariants, public-API compatibility, whatever
+  must never regress.
 - A change that would weaken any of these is a **HARD STOP** — surface it to the human;
   never trade it for a green gate.
 - If the repo has no security-sensitive surface, say so explicitly so nothing is assumed.
+
+## Tier 3 paths
+
+- Paths whose changes are always Tier 3 (security-critical), e.g. `internal/auth/`,
+  `internal/crypto/`, `billing/`. Write "none" if nothing qualifies.
 
 ## Toolchain & green-gate commands
 

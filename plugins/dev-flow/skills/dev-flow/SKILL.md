@@ -25,9 +25,8 @@ allowed-tools:
   - Agent
   - Skill
   - AskUserQuestion
-  - TaskCreate
-  - TaskUpdate
-  - TaskList
+  - EnterPlanMode
+  - ExitPlanMode
   - WebSearch
   - WebFetch
   - Bash(git status*)
@@ -47,6 +46,8 @@ allowed-tools:
   - Bash(go list*)
   - Bash(make *)
   - Bash(jq *)
+  - Bash(ls ~/.claude/plugins/cache/openai-codex/*)
+  - Bash(node ~/.claude/plugins/cache/openai-codex/codex/*/scripts/codex-companion.mjs *)
 effort: high
 ---
 
@@ -76,9 +77,12 @@ repo. **At Step 0, read it before anything else.** It defines, for this repo:
 
 - **Identity & anchor:** what this repo is, its neighbors, base branch (`dev` / `main` / `testnet`), paths,
   worktree naming.
-- **Domain guardrails (SECURITY — acceptance criteria, not guidance).** Apply them **verbatim**; inject them
-  into every dispatched subagent alongside the charter. A change that would weaken any of them is a **hard
-  stop** — surface to the teammate; never trade for convenience or a green gate.
+- **Domain guardrails (SECURITY — acceptance criteria, not guidance).** Either a `Guardrails: AGENTS.md ›
+  <sections>` pointer line — the named AGENTS.md sections **plus** the context file's own **Extra locks** — or,
+  with no pointer line, the context file's inline guardrails block. Read them **fresh at Step 0** and inject
+  them **verbatim** into every dispatched subagent alongside the charter. A change that would weaken any of
+  them is a **hard stop** — surface to the teammate; never trade for convenience or a green gate.
+- **Tier 3 paths** — the paths this repo treats as security-critical (see **Risk tiers**).
 - **Toolchain & green-gate commands** (build/lint/test/security for this stack).
 - **Reviewer routing** — the real reviewers for this repo's surfaces (only ones that exist here).
 - **Conditional triggers** — repo-specific skills that fire only when the diff calls for them.
@@ -122,12 +126,31 @@ best current way to X" — **run `WebSearch`/`WebFetch` FIRST and cite what you 
 memory, it goes stale.** Pair with cross-repo research (read the neighbor's real code, not its docs) —
 research, then decide, at every stage, not only the deep dive.
 
+## Risk tiers
+
+Every issue gets **one tier**, set at Step 2 and recorded in the ledger (`Tier:` line). Source, in order: the
+issue's `Security` field (an `/impl-issue` handoff), else the paths the change touches against this repo's
+**Tier 3 paths** (context file), else ask the teammate.
+
+| Tier | Surface | What changes in the flow |
+| ---- | ------- | ------------------------ |
+| **1** | docs, tests, UI copy, config/version pins | standard flow |
+| **2** | business logic, APIs, data access | standard flow |
+| **3** | security-critical — authn/authz, keys/secrets/crypto, signing, money or balance movement, permission checks, or any **Tier 3 path** | executor on `opus`; `plan-review` before the plan gate; every security fact re-verified (no pre-verified shortcut); security reviewers on `opus` |
+
+When unsure between two tiers, pick the higher one.
+
 ## Composed skills / agents (delegate, never duplicate)
 
 The skills below are **composed, not required**: dev-flow invokes each if you have it installed, and otherwise
 performs that step inline itself. If you use [Superpowers](https://github.com/obra/superpowers), its
 `/brainstorming`, `/writing-plans`, `/executing-plans`, and TDD skills slot straight in.
 
+- **`/impl-issue`** (bundled) — packages a finished investigation into an issue with SHA-pinned verified facts,
+  so Step 2 can skip re-reading unchanged paths. Run it in the investigating session; `/dev-flow` in a fresh one.
+- **Second model** (optional, swappable) — an independent reviewer bound by role (`diff-review`,
+  `plan-review`, `rescue`): the Codex plugin when installed, else a fresh Claude subagent. See
+  [references/dev-flow-reference.md](references/dev-flow-reference.md) › **Second model**.
 - **`/grill-me`** — interrogate the plan before any code (Step 3).
 - **`/writing-plans`** → the detailed phase-wise plan (throwaway working doc).
 - **`/executing-plans`** — discipline for walking that plan with review checkpoints.
@@ -142,7 +165,7 @@ performs that step inline itself. If you use [Superpowers](https://github.com/ob
   judgment read + **`git log` / `git blame`** for ownership/history — read the real code, anchor + neighbors.
 - **`/ship`** — opens the PR. **Never merges** here (see Rules).
 - **`/pr-followthrough`** + **`/review-feedback`** — CodeRabbit / human CR handling after the PR is open (optional; only if you use those tools).
-- **Recaps** — resume recap and every phase recap written **inline, terse caveman-style** (no external skill).
+- **Recaps** — resume recap and every phase recap written **inline, short and plain** (no external skill).
 - **`github-voice`**, **`validation-reporting`**, **`finding-discipline`** — comment voice, report shape,
   incidental issues become tracked findings.
 
@@ -166,8 +189,10 @@ dispatch:
 | -------------------------------------------------------------------- | ----------------------------------- | ----------- |
 | Delta skim — locate a fn, map a call site, confirm structure (`dev-flow-explorer`) | `haiku` (baked in)    | low         |
 | Read needing judgment — a security/protocol path, a subtle race; **never a plain skim** | `sonnet` (`Explore`) | medium      |
-| Per-task execution — `dev-flow-executor`                             | `sonnet`; `opus` for hard/high-risk | medium–high |
+| Planning (Steps 3–4, in plan mode)                                   | `opus` (automatic with the `opusplan` model setting) | high |
+| Per-task execution — `dev-flow-executor`                             | `sonnet`; `opus` for Tier 3 / hard tasks | medium  |
 | Per-task & final review                                              | `sonnet`; `opus` for high-risk      | medium      |
+| Tier 3 security review — the reviewers the context file routes to    | `opus`                              | high        |
 
 Token discipline: subagents return **summaries, not raw dumps**; the ledger prevents re-reading; read files in
 ranges, not whole; scope neighbor reads to only what the issue touches; escalate a tier only when a cheaper one
@@ -209,8 +234,7 @@ run Bootstrap (below) first, then continue.** Then resolve the
 (ledger name, worktree path, branch name). Then look in the anchor for `docs/plans/<issue>-progress.md` and the
 `project_<svc>_<issue>_in_progress` memory pointer.
 
-If found: **read the ledger, give a caveman recap, rebuild the on-screen todo list from its Plan section, and
-resume — do NOT re-grill, re-plan, or re-ask the execution choices** (honor the ledger's `Execution` line).
+If found: **read the ledger, give a short plain recap, and resume — do NOT re-grill, re-plan, or re-ask the execution choices** (honor the ledger's `Execution` line).
 Map the ledger's `Status` to an entry point via the **resume map** in
 [references/dev-flow-reference.md](references/dev-flow-reference.md); its `Next` line is authoritative —
 execute it. Otherwise (no ledger) start fresh at Step 1.
@@ -227,12 +251,15 @@ hand-authoring of what can be detected**, and an explicit human gate on what can
 2. **Draft** `.claude/dev-flow-context.md` from the template
    ([references/dev-flow-reference.md](references/dev-flow-reference.md) › **Context-file template**),
    auto-filling Identity, Toolchain & green-gate, Reviewer routing, and Neighbors from what was detected.
-3. **Human gate on guardrails.** Leave **Domain guardrails (SECURITY)** as a marked section and **ask the
-   teammate** to confirm or fill it — these inject as acceptance criteria and cannot be reliably inferred. Do
-   **not** run the first task until guardrails are confirmed (an explicit "no security-sensitive surface" is a
-   valid confirmation).
-4. **Approve & write.** Present the draft via `AskUserQuestion` (caveman); on approval, write the file and
-   continue to Step 1. On request, revise and re-present.
+3. **Human gate on guardrails.** If the repo's `AGENTS.md` (or `CLAUDE.md`) already has security /
+   invariant sections, propose a `Guardrails: AGENTS.md › <section names>` pointer line plus an empty
+   **Extra locks** list instead of copying the text; otherwise leave **Domain guardrails (SECURITY)** as a
+   marked inline section. Propose **Tier 3 paths** from obvious security-critical directories (auth, crypto,
+   keys, payments, permissions). Either way, **ask the teammate** to confirm or fill them — these inject as
+   acceptance criteria and cannot be reliably inferred. Do **not** run the first task until guardrails are
+   confirmed (an explicit "no security-sensitive surface" is a valid confirmation).
+4. **Approve & write.** Present the draft via `AskUserQuestion` (caveman, recommended pick marked); on
+   approval, write the file and continue to Step 1. On request, revise and re-present.
 
 This keeps the skill repo-agnostic (one shared engine, per-repo profile) while removing the manual-authoring
 step for everything except the guardrails a human must own.
@@ -268,28 +295,47 @@ Understand the issue from two sources, **deeply** — never from docs, `AGENTS.m
      read into a **security-sensitive** path (per this repo's guardrails) is **never a plain skim**: dispatch it
      on `sonnet` (built-in `Explore`). The real code the change touches is **always** read fresh; reuse only
      replaces re-scanning stable structure. Each read returns a summary, not a dump.
+3. **Pre-verified issues (`/impl-issue` template).** If the issue body has a `Verified at: <repo>@<sha>` line
+   and a `Read first` list, run `git fetch origin` first, then diff those paths against the current base:
+   `git diff <sha>..origin/<base> -- <read-first paths>` (`<base>` = this repo's base branch, per the context
+   file). If the sha isn't reachable or the diff errors, fall back to the normal deep dive above. A path with
+   **no diff** → trust the issue's verified facts for it and skip re-investigating it (no explorer skim);
+   files the change edits are still read before editing. Scope the deep dive to the issue's
+   `Assumptions (NOT verified)` section and to any `Read first` path the diff shows changed. **No `Security`
+   field on the issue** → don't apply this shortcut to any security-sensitive path (per this repo's
+   guardrails) — deep-dive those as in item 2. **Exception — Tier 3:** always re-verify every fact that
+   touches a security invariant regardless of diff output — the sha check never substitutes for that.
+4. **Set the risk tier** (see **Risk tiers**) and state it in one line with its reason.
 
 No assumption stands in for reading the issue or the real code the change touches.
 
-## Step 3 — Grill, then the layman plan (gate)
+## Step 3 — Grill, then the layman plan
+
+**Enter plan mode (`EnterPlanMode`) before planning.** Steps 3 and 4 run entirely inside it, so the plan is
+written before any edit (and on Opus with the `opusplan` model setting). Write everything into the plan-mode
+plan file — layman summary first, then the phases. Do not call `ExitPlanMode` until the end of Step 4.
 
 1. Run **`/grill-me`** on the findings until the decision tree is resolved.
-2. Present the plan in **short, plain, layman language** — no essays. What we do, why, in a few lines. **Gate:
-   get explicit approval before writing the detailed plan.**
+2. Draft the plan in **short, plain, layman language** — no essays. What we do, why, in a few lines — as the
+   top of the plan file.
+3. **Tier 3 only:** run `plan-review` ([Second model](references/dev-flow-reference.md) › table) on the draft;
+   triage findings before moving on.
 
 ## Step 4 — Phased plan
 
-Turn the approved shape into a **phase-wise** plan via `/writing-plans`. Each phase = a coherent slice, an
+Still in plan mode, turn the drafted shape into a **phase-wise** plan via `/writing-plans`, written into the
+plan file after the layman summary. Each phase = a coherent slice, an
 ordered list of tasks. **Phases and PRs are not 1:1** — the unit is a *reviewably small, coherent PR*, so a
 single PR may bundle several tightly-related phases, or one large phase may stand alone. **Group phases into
 PRs automatically by default:** the manager proposes the grouping in the plan and proceeds — no ask on a
 single-phase plan (always one PR). **Only when the plan has more than one phase, ask the teammate once** —
 caveman, `AskUserQuestion`, recommended pick marked: (a) bundle the phases into one PR *(Recommended when
 tightly coupled)*, (b) one PR per phase, or (c) a custom split. Record the result in the ledger (`PRs:` line —
-which phases map to which PR) so a warm resume keeps it without re-asking. **Create the ledger now:**
-`mkdir -p docs/plans/` in the anchor, write the plan into `docs/plans/<issue>-progress.md` from the reference
-template, then add the `project_<svc>_<issue>_in_progress` memory pointer. Also **stand up the on-screen todo
-list** — one item per task across all phases. Throwaway scaffolding, discarded when the issue ships.
+which phases map to which PR) so a warm resume keeps it without re-asking. **Call `ExitPlanMode` once, here, at
+the end of Step 4 — that approval is the single plan gate;** execution then continues outside plan mode (on
+Sonnet with `opusplan`). **After approval, create the ledger:** `mkdir -p docs/plans/` in the anchor, write the
+plan into `docs/plans/<issue>-progress.md` from the reference template, then add the
+`project_<svc>_<issue>_in_progress` memory pointer.
 
 ## Step 5 — Phase loop
 
@@ -318,7 +364,7 @@ Walk the plan phase by phase (with `/executing-plans` checkpoints when chosen). 
 - **Per task — run the executor (per run mode + execution skill).** Either way the task is a single bounded
   change committed on its own:
   - **Subagent-driven:** hand **`dev-flow-executor`** the task's acceptance criteria + declared files + this
-    repo's guardrails. Escalate `model` to `opus` for a hard / high-risk task.
+    repo's guardrails. Escalate `model` to `opus` for a Tier 3 / hard task.
   - **Inline:** the manager runs it under the chosen skill, charter + guardrails in context.
   Fire this repo's **conditional triggers** (context file) when the diff matches (e.g. a contract change runs
   its invariant suite inside red→green).
@@ -326,7 +372,7 @@ Walk the plan phase by phase (with `/executing-plans` checkpoints when chosen). 
   in code, no Claude/Anthropic attribution. Strip before committing.
 - **Migrations / schema, secrets/config** — follow this repo's context-file rules (generator-only migrations,
   the iac secrets path, etc.); never hand-edit generated migrations or commit a secret.
-- **Track it.** As each task lands, mark its todo item done and update the ledger (`Status` + checkbox).
+- **Track it.** As each task lands, update the ledger (`Status` + checkbox).
 - **Scope + sanity gate — before the reviewer:** `git diff --name-only` vs the files the task **declared**
   (out-of-scope file → justify in ledger or revert); **reuse check** recorded in the ledger (`reused <sym>`
   cite `file:line`, or `new — no fit because <reason>`); every cross-repo symbol resolves to a real `file:line`
@@ -337,10 +383,14 @@ Walk the plan phase by phase (with `/executing-plans` checkpoints when chosen). 
 - **Bad trajectory → recover to green, don't patch forward.** Recover the last green commit and resume a fresh
   subagent with the spec re-anchored. Before the PR exists → `git reset --hard <last-green>`; after it's open →
   **never force-push a rewrite**, add a forward `git revert` (rewriting a published branch is the teammate's call).
-- **Phase green gate — the ONE full checkpoint, right before push.** Executors run only their own task's test;
-  the full checkpoint (build, lint, whole suite, security scan — exact commands in this repo's context file)
-  runs **once, here, before push**, all green. Red → fix, re-run, push only when green (never ship red; if you
-  can't reach green, stop and ask). **Honor this repo's green-gate safety notes verbatim** (context file).
+- **Stuck — 2 failed attempts on the same problem.** Run `rescue`
+  ([Second model](references/dev-flow-reference.md) › table) automatically; triage its result before continuing.
+- **Phase green gate — the ONE full checkpoint, right before push.** Per task, run only that task's own tests
+  (red → green where the repo uses TDD). The full gate (format, lint, whole suite, build, security scan — exact
+  commands in this repo's context file) runs **once, here, before push**: fix and re-run until green, push only
+  when green (never ship red; if you can't reach green, stop and ask). Where the repo runs a hot-reload dev
+  loop, its compile result is the local build signal; CI stays the final gate. Never bypass the repo's git
+  hooks (no `--no-verify`). **Honor this repo's green-gate safety notes verbatim** (context file).
   Where the phase has a runnable check, run it and capture the evidence.
 - **Conditional gates — perf / etc.** Fire this repo's conditional triggers (context file) when matched; a
   matched-but-skipped gate is a **"Not validated"** line, not a silent pass — if its tooling is unreachable,
@@ -352,13 +402,14 @@ Walk the plan phase by phase (with `/executing-plans` checkpoints when chosen). 
   before the phase ships; a security-invariant regression is a hard stop — never shipped, even past a green gate.**
 - **Pre-push review gate — whole-change review, then fix, then push.** Never push until the *whole* change has
   had one review pass beyond the per-task ones. Dispatch a **fresh advisor agent** (routed by surface) over the
-  full diff (`git diff <parent>...HEAD`, or the whole PR if open); triage; fix the **real** findings via
+  full diff (`git diff <parent>...HEAD`, or the whole PR if open), **and run `diff-review`**
+  ([Second model](references/dev-flow-reference.md) › table) on every PR; triage both; fix the **real** findings via
   `/review-feedback` (note dismissed noise with a one-line reason). Only then push / open the PR.
 - **Oversized-phase check — ask only if it grew.** If a phase's actual diff outgrew a reviewably small PR (many
   files, several hundred+ lines, or mixed concerns), **stop and ask the teammate once** (`AskUserQuestion`)
   whether to split it into more than one PR before opening — otherwise proceed on the Step 4 grouping.
   Normal-sized phases: no ask, just ship.
-- After the PR's phase(s): **caveman recap** → **approval gate** → on approval, **`/ship`** opens the PR (never
+- After the PR's phase(s): **short recap** → **approval gate** → on approval, **`/ship`** opens the PR (never
   merge). Sync the ledger and refresh the memory pointer with the new PR stack.
 - **Between PRs — reset context, keep state (multi-PR flows only).** Once the PR is open and the ledger +
   memory pointer are synced, that stretch of conversation is spent — the ledger holds every decision and the
@@ -413,7 +464,8 @@ validation gaps are merge blockers (PRINCIPLES), so name them, never imply cover
 - **Never assume — ask.** Any unresolved question stops the flow and goes to the teammate.
 - **Every question is caveman + interactive + has a pick.** On any real choice — approach, scope, naming, model
   tier, every approval gate — stop and ask through the **interactive options UI** (`AskUserQuestion` radio
-  buttons), never bare prose: 2–4 choices in **short caveman words**, your **recommended answer marked** (lead
+  buttons), never bare prose: 2–4 choices in **short caveman words** (terse fragments, no filler), your
+  **recommended answer marked** (lead
   with it, `(Recommended)` in the label). Never decide alone.
 - **Ask at the moment the choice appears, not at the next checkpoint.** A question's cost rises the further it
   is from the decision. When a review finding, scope boundary, or "fold in vs file" call surfaces mid-phase,
@@ -435,13 +487,15 @@ validation gaps are merge blockers (PRINCIPLES), so name them, never imply cover
 ## Final report
 
 End with a `validation-reporting`-shaped block: phases completed, the PR stack and each PR's state,
-skills/agents handed off to, human gates hit, follow-ups filed, and a "Not validated" section for anything
-skipped.
+skills/agents handed off to, second-model roles run (and any fallback), human gates hit, follow-ups filed, and a
+"Not validated" section for anything skipped.
 
 ## Related
 
 - A lighter single-change flow (if you have one) — use it when the work fits one station instead of the full flow.
 - `/writing-plans`, `/executing-plans` — the plan-writing and plan-execution workflow skills this uses.
+- **`/impl-issue`** (bundled) — the investigation → implementation handoff that feeds Step 2's pre-verified
+  shortcut.
 - **`.claude/dev-flow-context.md`** — this repo's profile (identity, guardrails, toolchain, reviewers); Step 0
   reads it first.
 - [PRINCIPLES.md](../../PRINCIPLES.md) — smallest correct diff; validation gaps are merge blockers.
