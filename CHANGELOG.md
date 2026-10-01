@@ -26,6 +26,9 @@ minor/patch semantics are loose while it's greenfield.
   dumps raw JSON).
 
 ### Changed
+- **dev-flow:** opens each PR itself (`git push` + `gh pr create`) instead of handing off to a `/ship`
+  skill. Before opening, a PR gate asks whether to open a ready PR, a draft PR, or hold (ledger goes to
+  `awaiting-approval`). Stacked PRs target the parent PR's branch. Still never merges.
 - **dev-flow:** Steps 3–4 run inside plan mode with a single approval gate at the end of Step 4
   (Opus planning with the `opusplan` model setting); the ledger is written after approval.
 - **dev-flow:** green gate runs each task's own tests per task and the full gate once before push;
