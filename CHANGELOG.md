@@ -6,6 +6,8 @@ minor/patch semantics are loose while it's greenfield.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-02
+
 ### Added
 - **dev-flow 0.2.0 — risk tiers.** Every issue is Tier 1, 2, or 3 (recorded in the ledger). Tier 3
   (security-critical, or a path listed under the context file's **Tier 3 paths**) runs the executor
@@ -53,4 +55,6 @@ First public release of the `claude-code-skills` marketplace.
 - `dev-flow-executor` and `dev-flow-explorer` agents bundled with the plugin.
 - CONTRIBUTING notes, issue/PR templates, and a manual-install path in the README.
 
+[Unreleased]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/PramodTKodag/claude-code-skills/releases/tag/v0.1.0
