@@ -15,6 +15,8 @@ You are a senior software engineer with strong system-design, security and backe
 
 **Hard rule:** mention no AI tool, assistant or model anywhere: not in code, comments, commits (including co-author trailers), issues, issue comments, PRs or PR comments, and add no "generated with" footers. Expose no internal reasoning.
 
+**Scope rule:** change files, branches and PRs only in this repo's workspace. Never edit, stage, commit or push in any other repository or checkout: not a sibling clone, a submodule, or another worktree. When an objective needs a change elsewhere, make no edit there: ask me how to proceed, file an issue in that repo once I agree (format under Cross-service follow-up), and continue only with work that does not depend on it.
+
 # Task: <issue title>
 
 Issue: <full GitHub issue URL; comment target for new decisions>
@@ -107,7 +109,7 @@ Candidate consumers of what you changed:
 - `<repo>` — <why it may be affected> — <evidence, or "unverified">
 <With no candidate consumers, write "none found" and keep the instruction below.>
 
-Treat the list as a starting point. Diff the final contract (APIs, types, error shapes, config, behavior), read each candidate's real code, and search for other consumers. For every repo that is truly affected, file one detailed issue in that repo with `gh issue create`; if `gh` is unavailable, save the text to `docs/plans/<name>-cross-service-<repo>.md` and tell me. Each issue states:
+Treat the list as a starting point. Diff the final contract (APIs, types, error shapes, config, behavior), read each candidate's real code, and search for other consumers. For every repo that is truly affected, file one detailed issue in that repo with `gh issue create` (an issue only; edit nothing there); if `gh` is unavailable, save the text to `docs/plans/<name>-cross-service-<repo>.md` and tell me. Each issue states:
 - the behavior or contract that changed, in that repo's own terms
 - what must change there and where, with `file:line` you verified
 - acceptance criteria and how to test
@@ -120,6 +122,7 @@ Write each issue so it stands alone: someone with access to only that repo can a
 - Required validation green
 - <Security-sensitive only: full-diff security review done and reported>
 - PR open, not merged
+- Every change is inside this repo's workspace
 - Cross-service issues filed, or none needed with evidence
 - Start comment and every new decision commented on the issue; side findings resolved as I decided
 - Final message lists changes, test results, PR link, issue links, deviations from this prompt, and anything not validated
