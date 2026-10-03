@@ -6,6 +6,8 @@ minor/patch semantics are loose while it's greenfield.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-03
+
 ### Changed
 - **plan-flow 0.2.0 — pinned facts.** The generated prompt now pins the commit each repo was read at
   (`Verified at: <repo>@<sha>`). The coding session diffs the paths it will touch against that commit,
@@ -73,7 +75,8 @@ First public release of the `claude-code-skills` marketplace.
 - `dev-flow-executor` and `dev-flow-explorer` agents bundled with the plugin.
 - CONTRIBUTING notes, issue/PR templates, and a manual-install path in the README.
 
-[Unreleased]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/PramodTKodag/claude-code-skills/releases/tag/v0.1.0
