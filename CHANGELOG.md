@@ -12,6 +12,9 @@ minor/patch semantics are loose while it's greenfield.
   (defects found outside the objectives) until one batched question before the PR: file an issue for
   another repo or this one, or fold a same-repo finding into the PR. Security vulnerabilities are
   reported immediately. Both land in the slim progress file.
+- **plan-flow 0.3.0 — start comment.** Before objective 1 the coding session posts one comment on the
+  issue with the root cause, target design, every settled decision (with why and the rejected option) and
+  the compatibility mode, so the issue holds the decision record even if the local prompt file is lost.
 - **plan-flow 0.3.0 — hard rule.** The prompt opens with an explicit rule against any AI tool,
   assistant or model mention in code, commits (including co-author trailers), issues, PRs and their
   comments.

@@ -98,7 +98,7 @@ Create `docs/plans/<issue>-progress.md` in your workspace with the content below
 - Work on a branch, open a PR against `<base branch>`, never merge it, and push nothing to `<base branch>` directly.
 
 ## New decisions and side findings
-**Decisions.** Post a comment on the issue (`gh issue comment`) for every decision this prompt does not already settle: a deviation from it, an answer I gave you, how a side finding was resolved. State the decision, why, and the alternative you rejected. Post at the points where you update the progress file, or before opening the PR when there is none, and mark each decision posted under `Decisions`.
+**Decisions.** Before objective 1, post one comment on the issue (`gh issue comment`): the root cause and target design in one line each, every item under Decided (decision, why, rejected alternative), and the compatibility mode with its migration or rollout path. Then post a comment for every later decision this prompt does not already settle: a deviation from it, an answer I gave you, how a side finding was resolved. State the decision, why, and the alternative you rejected. Post later comments at the points where you update the progress file, or before opening the PR when there is none, and mark each posted decision, the start comment included, under `Decisions`. Write plain prose: no progress chatter, code, secrets, key material or exploit detail.
 
 **Side findings.** You may find a defect or gap outside the objectives, in this repo or another. Do not fix or file it on your own. Note it in one line (repo, `file:line`, what is wrong) under `Findings` when the progress file exists, else in your notes; keep implementing; and show me the list once before opening the PR. For each item, ask me: another repo → file an issue there, yes or no; this repo → file an issue, or fold it into this PR. Report a security vulnerability immediately instead of waiting. Write approved issues in the format under Cross-service follow-up. Everything you post follows the hard rule above.
 
@@ -121,5 +121,5 @@ Write each issue so it stands alone: someone with access to only that repo can a
 - <Security-sensitive only: full-diff security review done and reported>
 - PR open, not merged
 - Cross-service issues filed, or none needed with evidence
-- New decisions commented on the issue; side findings resolved as I decided
+- Start comment and every new decision commented on the issue; side findings resolved as I decided
 - Final message lists changes, test results, PR link, issue links, deviations from this prompt, and anything not validated
