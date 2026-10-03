@@ -15,9 +15,18 @@ minor/patch semantics are loose while it's greenfield.
 - **plan-flow 0.3.0 — start comment.** Before objective 1 the coding session posts one comment on the
   issue with the root cause, target design, every settled decision (with why and the rejected option) and
   the compatibility mode, so the issue holds the decision record even if the local prompt file is lost.
+- **plan-flow 0.3.0 — lean prompt.** The template and self-check now require deleting every
+  not-applicable section and leftover hint and listing under Verified only the facts an objective or
+  security requirement depends on, since the coding session carries the prompt in context for the
+  whole run.
 - **plan-flow 0.3.0 — hard rule.** The prompt opens with an explicit rule against any AI tool,
   assistant or model mention in code, commits (including co-author trailers), issues, PRs and their
   comments.
+
+### Changed
+- **plan-flow 0.3.0 — progress file name.** The coding session's progress file is now
+  `docs/plans/<issue>-plan-progress.md`, so it no longer shares a path with the `dev-flow` ledger
+  (`docs/plans/<issue>-progress.md`).
 
 ## [0.4.0] - 2026-10-03
 
