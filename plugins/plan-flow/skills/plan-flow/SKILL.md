@@ -61,7 +61,7 @@ If the body has `Verified at: <repo>@<sha>` and a `Read first` list: `git fetch`
 
 Read the paths the issue changes and each neighbor it relies on, in line ranges. Source is truth, not docs, comments, or prior summaries. One reader per target, parallel when subagents are on; security-sensitive paths read at Standard. Readers return summaries with `file:line`.
 
-Tag every fact **verified** (read, with `file:line`) or **assumed**.
+Tag every fact **verified** (read, with `file:line`) or **assumed**. Record the commit each repo was read at (`git rev-parse HEAD`, noting uncommitted changes to the paths read); the prompt pins it.
 
 ## 4. Cross-service
 
@@ -90,13 +90,14 @@ Read `references/prompt-template.md` now, not earlier, and fill it. With two or 
 
 Self-check before handing over, by one Standard subagent or inline when subagents are off:
 - every acceptance criterion maps to an objective
-- every verified fact carries `file:line`; assumptions are flagged
+- every verified fact carries `file:line`; assumptions are flagged; the Verified block pins each repo's commit
 - no open option or unanswered question remains; each decision sits under "Decided" with its rejected alternatives
 - a cold session can start objective 1 with no further research: objectives name confirmed paths, tests are named, validation commands are exact, the first action is concrete
 - the prompt opens with the implement-now directive and lists only the three mandatory stops
 - the Workspace section matches the chosen mode with a resolved path, branch and base, and Validation uses that mode's commands
 - a Progress block exists exactly when there are two or more objectives, and its titles match the Objectives
 - hygiene, compatibility and cross-service blocks are present, and the compatibility block matches the chosen mode
+- a security-sensitive issue per the profile carries the pre-PR diff review line
 - no secrets, key material, or AI-tool names
 
 Fix gaps. Then reply with a report of at most 25 lines: issue summary, root cause, design, security findings, edge cases, alternatives, open questions. End by suggesting `/clear`.
