@@ -16,6 +16,11 @@
       "name": "dependency-audit",
       "source": "./plugins/dependency-audit",
       "description": "Audit dependencies for known vulnerabilities and outdated packages across npm/pnpm/yarn, Go, Python, and Cargo; produces a prioritized, read-only remediation report."
+    },
+    {
+      "name": "plan-flow",
+      "source": "./plugins/plan-flow",
+      "description": "Investigate a GitHub issue against the real code — cross-service, security, design challenge — and write a self-contained implementation prompt for a separate coding session in any AI tool. Never implements the issue."
     }
   ]
 }
