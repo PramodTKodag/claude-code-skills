@@ -1,0 +1,6 @@
+interface:
+  display_name: "Plan Flow"
+  short_description: "Investigate an issue and write an implementation prompt"
+  default_prompt: "Use $plan-flow to investigate this issue and write the implementation prompt."
+policy:
+  allow_implicit_invocation: false

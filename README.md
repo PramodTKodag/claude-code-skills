@@ -10,7 +10,7 @@ self-contained.
 
 > These run on **Claude Code** (the SKILL.md / plugin format is Claude Code's). Other AI
 > coding tools don't execute them natively. The *methodology* is portable; the packaging is
-> not — yet.
+> not — yet. (`plan-flow` is the exception; see [Using `plan-flow`](#using-plan-flow).)
 
 ## Plugins
 
@@ -18,6 +18,7 @@ self-contained.
 | ------ | ------------ |
 | [`dev-flow`](plugins/dev-flow) | Drive one large, multi-phase or multi-PR change end to end — plan → execute task-by-task with a live ledger → ship per PR → resume cleanly across sessions. |
 | [`dependency-audit`](plugins/dependency-audit) | Read-only audit of dependencies for known vulnerabilities (CVEs) and outdated packages across npm/pnpm/yarn, Go, Python, and Cargo → prioritized remediation report. |
+| [`plan-flow`](plugins/plan-flow) | Everything before implementation — investigate a GitHub issue against the real code, trace cross-repo consumers, audit security, grill open decisions → one self-contained prompt for a separate coding session in any AI tool. |
 
 More will be added over time.
 
@@ -106,6 +107,41 @@ sub-skill if you have it installed, and otherwise performs that step inline itse
 works with no extra dependencies. If you use [Superpowers](https://github.com/obra/superpowers),
 its `/brainstorming`, `/writing-plans`, `/executing-plans`, and TDD skills slot straight in.
 `CodeRabbit` / `/pr-followthrough` steps are optional and only fire if you use those tools.
+
+## Using `plan-flow`
+
+`plan-flow` does everything *before* implementation. Give it a GitHub issue and it reads the real
+code, traces cross-repo consumers, audits security, challenges the design, grills you on open
+decisions, and writes one self-contained prompt that a separate coding session (any AI tool)
+executes. It never edits product code.
+
+```text
+/plan-flow 123                 # plan issue 123 in the current repo
+/plan-flow 123 --worktree      # the prompt directs the coding session into a git worktree
+/plan-flow 123 --light         # small issue: run the whole session on a mid-tier model
+/plan-flow 123 --greenfield    # no live users or data: plan without compatibility work
+```
+
+- **Presets.** `Full` (default) plans on a deep-reasoning model, optionally with cheap subagents for
+  reads and research. `--light` runs the whole session on a mid-tier model and escalates (asks you to
+  switch) if it finds a security-sensitive path, a contract another repo consumes, or an architecture
+  decision.
+- **Compatibility.** The default assumes existing consumers and data, so breaking changes get a
+  migration or rollout path. `--greenfield` drops that work.
+- **Output.** `docs/plans/<issue>-implementation-prompt.md` (never staged), also printed for copying.
+  The prompt tells the coding session to implement immediately, keep a slim progress file, and, after
+  validation, file detailed issues in any affected consumer repos.
+- **Pairs with `impl-issue`.** An issue carrying `Verified at: <repo>@<sha>` lets `plan-flow` skip
+  re-reading paths unchanged since that commit.
+- **Context.** Reads `AGENTS.md` / `CLAUDE.md` and, if present, the `.claude/dev-flow-context.md` that
+  `dev-flow` writes; otherwise it infers the base branch and test commands and asks you to confirm.
+
+`plan-flow` follows the open Agent Skills layout, so for other tools copy the skill folder where the
+tool looks for skills — Codex and Cursor read `~/.agents/skills/`:
+
+```bash
+cp -R plugins/plan-flow/skills/plan-flow ~/.agents/skills/
+```
 
 ## Security & disclaimer
 

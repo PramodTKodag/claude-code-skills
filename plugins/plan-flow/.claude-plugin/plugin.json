@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin.json",
+  "name": "plan-flow",
+  "displayName": "Plan Flow",
+  "version": "0.1.0",
+  "description": "Investigate a GitHub issue against the real code — cross-service, security, design challenge — and write a self-contained implementation prompt for a separate coding session. Never implements the issue.",
+  "author": {
+    "name": "Pramod Kodag",
+    "email": "pramodkodag.dev@gmail.com"
+  },
+  "license": "Apache-2.0",
+  "keywords": [
+    "planning",
+    "handoff",
+    "github-issues",
+    "security-review",
+    "cross-service",
+    "implementation-prompt",
+    "agent-skills",
+    "codex",
+    "cursor"
+  ]
+}

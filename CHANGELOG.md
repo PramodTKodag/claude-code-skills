@@ -6,6 +6,14 @@ minor/patch semantics are loose while it's greenfield.
 
 ## [Unreleased]
 
+### Added
+- **plan-flow 0.1.0** plugin — investigates a GitHub issue against the real code (cross-repo trace,
+  security audit, design challenge, batched grilling with recommended answers) and writes a
+  self-contained implementation prompt for a separate coding session in any AI tool. Flags:
+  `--worktree`, `--light` (mid-tier session with an escalate rule), `--greenfield` (drops
+  compatibility work; off by default). The prompt tells the coding session to implement immediately,
+  keep a slim progress file, and file issues in affected consumer repos after validation.
+
 ## [0.2.0] - 2026-10-02
 
 ### Added
