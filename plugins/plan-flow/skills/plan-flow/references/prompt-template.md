@@ -29,11 +29,12 @@ Set up the workspace first, then start the first action.
 
 ## Quick check, then implement
 1. Skim the issue and its comments for anything newer than this prompt.
-2. Confirm the Verified facts still hold in the files you are about to edit. Confirm each Assumed item when you reach it.
+2. Run `git diff <sha> origin/<base branch> -- <Read first paths and every file you will edit>` (re-read those paths if the SHA is unreachable). Trust Verified facts in unchanged paths; re-read changed paths and every security-control fact. Confirm each Assumed item when you reach it.
 3. If code contradicts this prompt on a detail that leaves the objectives intact, follow the code and note it in your final message.
 4. Stop and tell me only when: a Verified fact is false in a way that makes an objective wrong; a change would weaken a security control; a required access or dependency is missing. Otherwise implement.
 
 ## Verified (read in code)
+Verified at: `<repo>@<sha>` (one line per repo read)
 - <fact> — `<file:line>`
 
 ## Assumed (confirm before relying on it)
@@ -88,6 +89,8 @@ Create `docs/plans/<issue>-progress.md` in your workspace with the content below
 ## Validation
 <exact format, lint, test, build commands from the repo profile for the chosen workspace mode. In worktree mode, state that main-checkout targets exercise the wrong tree and use the profile's worktree commands. Run the full set once before pushing; never skip git hooks.>
 
+<Security-sensitive issues only; delete this paragraph otherwise.> Before opening the PR, re-read your full diff as a security reviewer against the Security requirements above, fix what you find, and report what you checked in your final message.
+
 ## Repository hygiene
 - Mention no AI tool or assistant in code, comments, commits, PRs or issues. Expose no internal reasoning.
 - Work on a branch, open a PR against `<base branch>`, never merge it, and push nothing to `<base branch>` directly.
@@ -108,6 +111,7 @@ Write each issue so it stands alone: someone with access to only that repo can a
 ## Definition of done
 - Every objective met and verified against code
 - Required validation green
+- <Security-sensitive only: full-diff security review done and reported>
 - PR open, not merged
 - Cross-service issues filed, or none needed with evidence
 - Final message lists changes, test results, PR link, issue links, deviations from this prompt, and anything not validated

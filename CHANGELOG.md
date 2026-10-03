@@ -6,6 +6,14 @@ minor/patch semantics are loose while it's greenfield.
 
 ## [Unreleased]
 
+### Changed
+- **plan-flow 0.2.0 — pinned facts.** The generated prompt now pins the commit each repo was read at
+  (`Verified at: <repo>@<sha>`). The coding session diffs the paths it will touch against that commit,
+  trusts unchanged facts, and re-reads only what changed plus every security-control fact.
+- **plan-flow 0.2.0 — pre-PR security review.** For security-sensitive issues the prompt tells the
+  coding session to re-read its full diff as a security reviewer before opening the PR, and to report
+  what it checked.
+
 ## [0.3.0] - 2026-10-03
 
 ### Added
