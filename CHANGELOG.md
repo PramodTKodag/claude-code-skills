@@ -6,6 +6,16 @@ minor/patch semantics are loose while it's greenfield.
 
 ## [Unreleased]
 
+### Added
+- **plan-flow 0.3.0 — new decisions and side findings.** The generated prompt tells the coding session
+  to comment on the issue for every decision the prompt did not settle, and to hold side findings
+  (defects found outside the objectives) until one batched question before the PR: file an issue for
+  another repo or this one, or fold a same-repo finding into the PR. Security vulnerabilities are
+  reported immediately. Both land in the slim progress file.
+- **plan-flow 0.3.0 — hard rule.** The prompt opens with an explicit rule against any AI tool,
+  assistant or model mention in code, commits (including co-author trailers), issues, PRs and their
+  comments.
+
 ## [0.4.0] - 2026-10-03
 
 ### Changed

@@ -96,7 +96,7 @@ Self-check before handing over, by one Standard subagent or inline when subagent
 - the prompt opens with the implement-now directive and lists only the three mandatory stops
 - the Workspace section matches the chosen mode with a resolved path, branch and base, and Validation uses that mode's commands
 - a Progress block exists exactly when there are two or more objectives, and its titles match the Objectives
-- hygiene, compatibility and cross-service blocks are present, and the compatibility block matches the chosen mode
+- the Issue line holds the full issue URL; the hard rule, hygiene, new-decisions-and-findings, compatibility and cross-service blocks are present, and the compatibility block matches the chosen mode
 - a security-sensitive issue per the profile carries the pre-PR diff review line
 - no secrets, key material, or AI-tool names
 

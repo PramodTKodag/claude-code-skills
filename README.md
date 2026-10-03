@@ -130,8 +130,9 @@ executes. It never edits product code.
   migration or rollout path. `--greenfield` drops that work.
 - **Output.** `docs/plans/<issue>-implementation-prompt.md` (never staged), also printed for copying.
   The prompt pins the commit its facts were verified at, tells the coding session to implement
-  immediately, keep a slim progress file, review its own diff for security before the PR (on
-  security-sensitive issues), and, after validation, file detailed issues in any affected consumer repos.
+  immediately, keep a slim progress file, comment new decisions on the issue, hold side findings for
+  one batched question, review its own diff for security before the PR (on security-sensitive
+  issues), and, after validation, file detailed issues in any affected consumer repos.
 - **Pairs with `impl-issue`.** An issue carrying `Verified at: <repo>@<sha>` lets `plan-flow` skip
   re-reading paths unchanged since that commit.
 - **Context.** Reads `AGENTS.md` / `CLAUDE.md` and, if present, the `.claude/dev-flow-context.md` that
