@@ -100,7 +100,7 @@ Self-check before handing over, by one Standard subagent or inline when subagent
 - the Workspace names one checkout, the anchor repo; every objective edits only it, and a needed change in another repo appears under Cross-service follow-up, never as an objective
 - a Progress block exists exactly when there are two or more objectives, and its titles match the Objectives
 - the prompt is lean: no not-applicable section or leftover `<…>` hint, and Verified lists only facts an objective or security requirement depends on
-- the Issue line holds the full issue URL; the hard rule, hygiene, new-decisions-and-findings, compatibility and cross-service blocks are present, and the compatibility block matches the chosen mode
+- the Issue line holds the full issue URL; the hard rule, hygiene, new-decisions-and-findings, after-merge (with the prompt file's absolute path), compatibility and cross-service blocks are present, and the compatibility block matches the chosen mode
 - a security-sensitive issue per the profile carries the pre-PR diff review line
 - no secrets, key material, or AI-tool names
 

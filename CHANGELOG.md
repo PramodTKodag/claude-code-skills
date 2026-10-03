@@ -7,6 +7,9 @@ minor/patch semantics are loose while it's greenfield.
 ## [Unreleased]
 
 ### Added
+- **plan-flow 0.3.0 — after-merge cleanup.** The prompt tells the coding session to delete the prompt file
+  and the progress file once every PR it opened for the issue is merged and you confirm. If any PR is
+  still open it keeps both files and says which.
 - **plan-flow 0.3.0 — `--no-prompt`.** By default the skill saves the prompt file and prints the same text
   in one fenced block; saving the file never replaces printing it. `--no-prompt` saves the file only and
   prints no prompt text.
