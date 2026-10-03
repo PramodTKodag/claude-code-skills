@@ -6,6 +6,8 @@ minor/patch semantics are loose while it's greenfield.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-03
+
 ### Added
 - **plan-flow 0.1.0** plugin — investigates a GitHub issue against the real code (cross-repo trace,
   security audit, design challenge, batched grilling with recommended answers) and writes a
@@ -63,6 +65,7 @@ First public release of the `claude-code-skills` marketplace.
 - `dev-flow-executor` and `dev-flow-explorer` agents bundled with the plugin.
 - CONTRIBUTING notes, issue/PR templates, and a manual-install path in the README.
 
-[Unreleased]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/PramodTKodag/claude-code-skills/releases/tag/v0.1.0
