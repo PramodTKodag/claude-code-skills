@@ -120,6 +120,7 @@ executes. It never edits product code.
 /plan-flow 123 --worktree      # the prompt directs the coding session into a git worktree
 /plan-flow 123 --light         # small issue: run the whole session on a mid-tier model
 /plan-flow 123 --greenfield    # no live users or data: plan without compatibility work
+/plan-flow 123 --no-prompt     # save the prompt file only; print no prompt text
 ```
 
 - **Presets.** `Full` (default) plans on a deep-reasoning model, optionally with cheap subagents for
@@ -128,11 +129,12 @@ executes. It never edits product code.
   decision.
 - **Compatibility.** The default assumes existing consumers and data, so breaking changes get a
   migration or rollout path. `--greenfield` drops that work.
-- **Output.** `docs/plans/<issue>-implementation-prompt.md` (never staged), also printed for copying.
+- **Output.** `docs/plans/<issue>-implementation-prompt.md` (never staged), also printed for copying unless you pass `--no-prompt`.
   The prompt pins the commit its facts were verified at, tells the coding session to implement
   immediately, keep a slim progress file, post one start comment with the settled decisions and a comment
   for each new one on the issue, hold side findings for one batched question, review its own diff for security before the PR (on security-sensitive
-  issues), and, after validation, file detailed issues in any affected consumer repos.
+  issues), and, after validation, file detailed issues in any affected consumer repos. The coding session edits only the repo it runs in;
+  a change needed elsewhere becomes an issue, never an edit.
 - **Pairs with `impl-issue`.** An issue carrying `Verified at: <repo>@<sha>` lets `plan-flow` skip
   re-reading paths unchanged since that commit.
 - **Context.** Reads `AGENTS.md` / `CLAUDE.md` and, if present, the `.claude/dev-flow-context.md` that

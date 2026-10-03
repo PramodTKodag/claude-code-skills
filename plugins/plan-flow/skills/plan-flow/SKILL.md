@@ -1,7 +1,7 @@
 ---
 name: plan-flow
 description: Investigates a GitHub issue against the real code and writes a self-contained implementation prompt for a separate coding session, without implementing anything. Use when the teammate runs /plan-flow or wants an issue investigated, grilled, security-audited and cross-service-checked before a different AI session or tool implements it.
-argument-hint: "<issue-number-or-url> [--worktree] [--light] [--greenfield]"
+argument-hint: "<issue-number-or-url> [--worktree] [--light] [--greenfield] [--no-prompt]"
 disable-model-invocation: true
 ---
 
@@ -9,11 +9,13 @@ disable-model-invocation: true
 
 Investigate one GitHub issue, then write the implementation prompt another session will execute. This session reads, researches, asks, and writes one prompt file. It edits no product code, opens no branch or PR, and saves no memory.
 
-Input: issue link or number, optional `--worktree` (dashes optional), optional `--light`, optional `--greenfield`, plus any notes the teammate pasted. Missing issue → ask.
+Input: issue link or number, optional `--worktree` (dashes optional), optional `--light`, optional `--greenfield`, optional `--no-prompt`, plus any notes the teammate pasted. Missing issue → ask.
 
 **Checkout mode.** `--worktree` → the prompt directs implementation into a new git worktree. Omitted → the current checkout. Fix the mode now and state it in the preflight message. This session creates no worktree or branch; the coding session does.
 
 **Compatibility mode.** `--greenfield` → the product has no live users, consumers or stored data to preserve, so the plan carries no compatibility or migration work. Omitted → existing consumers and data are assumed, and a breaking change needs a migration or rollout path. Fix the mode now and state it in the preflight message.
+
+**Output mode.** Default: save the prompt file and print the same text in one fenced block. `--no-prompt` → save the file only and print no prompt text.
 
 ## Tiers
 
@@ -65,7 +67,7 @@ Tag every fact **verified** (read, with `file:line`) or **assumed**. Record the 
 
 ## 4. Cross-service
 
-Trace the flow across repos end to end. Place the fix in the generic component that owns the behavior, never as a downstream workaround. List candidate consumers from the profile's downstream list, if any, and from what the code shows, each with evidence or marked unverified. The prompt carries this list.
+Trace the flow across repos end to end. Place the fix in the generic component that owns the behavior, never as a downstream workaround. List candidate consumers from the profile's downstream list, if any, and from what the code shows, each with evidence or marked unverified. The prompt carries this list. The coding session edits the anchor repo only: when the component that owns the fix sits in another repo, write no objective or workspace for it. Ask the teammate whether to file an issue there for separate planning, and carry it in this list.
 
 ## 5. Security, challenge, research
 
@@ -86,7 +88,7 @@ Security-sensitive per the profile (auth, keys or crypto, payments, permissions,
 
 ## 8. Write the prompt
 
-Read `references/prompt-template.md` now, not earlier, and fill it. With two or more objectives, fill its Progress block with the objective titles; the coding session creates that file, never this one. Save `docs/plans/<issue>-implementation-prompt.md` in the anchor repo; never stage it, and say so if the path is not git-ignored. Print the same text in one fenced block for copying.
+Read `references/prompt-template.md` now, not earlier, and fill it. With two or more objectives, fill its Progress block with the objective titles; the coding session creates that file, never this one. Save `docs/plans/<issue>-implementation-prompt.md` in the anchor repo; never stage it, and say so if the path is not git-ignored. Print the same text in one fenced block for copying: saving the file never replaces printing it. With `--no-prompt`, print no prompt text and give only the file path in the report.
 
 Self-check before handing over, by one Standard subagent or inline when subagents are off:
 - every acceptance criterion maps to an objective
@@ -95,6 +97,7 @@ Self-check before handing over, by one Standard subagent or inline when subagent
 - a cold session can start objective 1 with no further research: objectives name confirmed paths, tests are named, validation commands are exact, the first action is concrete
 - the prompt opens with the implement-now directive and lists only the three mandatory stops
 - the Workspace section matches the chosen mode with a resolved path, branch and base, and Validation uses that mode's commands
+- the Workspace names one checkout, the anchor repo; every objective edits only it, and a needed change in another repo appears under Cross-service follow-up, never as an objective
 - a Progress block exists exactly when there are two or more objectives, and its titles match the Objectives
 - the prompt is lean: no not-applicable section or leftover `<…>` hint, and Verified lists only facts an objective or security requirement depends on
 - the Issue line holds the full issue URL; the hard rule, hygiene, new-decisions-and-findings, compatibility and cross-service blocks are present, and the compatibility block matches the chosen mode
@@ -108,4 +111,6 @@ Fix gaps. Then reply with a report of at most 25 lines: issue summary, root caus
 - Tokens: summaries over dumps, line ranges over whole files, no re-reads, scope to the delta.
 - Use the repo's own domain terms.
 - The prompt names no tool-specific commands or skills.
+- Print the finished prompt in a fenced block unless `--no-prompt`; the saved file alone is not a handoff.
+- The prompt edits one repo, the anchor repo. Changes elsewhere go to issues, never to objectives.
 - No memory writes. No product edits. Git is read-only except the one prompt file.

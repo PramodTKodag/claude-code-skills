@@ -7,6 +7,13 @@ minor/patch semantics are loose while it's greenfield.
 ## [Unreleased]
 
 ### Added
+- **plan-flow 0.3.0 — `--no-prompt`.** By default the skill saves the prompt file and prints the same text
+  in one fenced block; saving the file never replaces printing it. `--no-prompt` saves the file only and
+  prints no prompt text.
+- **plan-flow 0.3.0 — single-repo scope rule.** The planner writes objectives and a workspace for the
+  anchor repo only, and the prompt tells the coding session to change nothing in any other repository or
+  checkout: when an objective needs a change elsewhere it asks, files an issue once agreed, and edits
+  nothing there.
 - **plan-flow 0.3.0 — new decisions and side findings.** The generated prompt tells the coding session
   to comment on the issue for every decision the prompt did not settle, and to hold side findings
   (defects found outside the objectives) until one batched question before the PR: file an issue for
