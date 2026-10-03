@@ -117,6 +117,11 @@ Treat the list as a starting point. Diff the final contract (APIs, types, error 
 
 Write each issue so it stands alone: someone with access to only that repo can act on it. List repos you checked and found unaffected, with one line of evidence each. Give me every issue link in your final message.
 
+## After merge
+Delete the planning files only after every PR you opened for this issue is merged (one PR: that PR). When I tell you they are merged, confirm each with `gh pr view <number> --json state` reporting `MERGED`; if any is not, keep both files and tell me which. Then list the files below and ask me to confirm. On yes, delete them:
+- `<absolute path of this prompt file>`, in the main checkout
+- the progress file in your workspace, if one exists
+
 ## Definition of done
 - Every objective met and verified against code
 - Required validation green

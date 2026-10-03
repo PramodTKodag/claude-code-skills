@@ -134,7 +134,8 @@ executes. It never edits product code.
   immediately, keep a slim progress file, post one start comment with the settled decisions and a comment
   for each new one on the issue, hold side findings for one batched question, review its own diff for security before the PR (on security-sensitive
   issues), and, after validation, file detailed issues in any affected consumer repos. The coding session edits only the repo it runs in;
-  a change needed elsewhere becomes an issue, never an edit.
+  a change needed elsewhere becomes an issue, never an edit. Once every PR for the issue is merged and you
+  confirm, it deletes the prompt file and the progress file.
 - **Pairs with `impl-issue`.** An issue carrying `Verified at: <repo>@<sha>` lets `plan-flow` skip
   re-reading paths unchanged since that commit.
 - **Context.** Reads `AGENTS.md` / `CLAUDE.md` and, if present, the `.claude/dev-flow-context.md` that
