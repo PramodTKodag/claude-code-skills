@@ -5,7 +5,7 @@ last-reviewed: 2026-10-03
 
 # Implementation prompt template
 
-Fill every section in order. Drop a section only when it does not apply to this issue. Replace each `<…>`. Write imperatively: state decisions, never options. The finished text is plain Markdown that works pasted into any coding tool.
+Fill every section in order. Keep the prompt lean, since the coding session carries it in context for the whole run: delete each section, bullet and `<…>` hint that does not apply to this issue, list under Verified only the facts an objective or security requirement depends on, and state each decision in one line. Replace each `<…>`. Write imperatively: state decisions, never options. The finished text is plain Markdown that works pasted into any coding tool.
 
 ---
 
@@ -59,7 +59,7 @@ Verified at: `<repo>@<sha>` (one line per repo read)
 ## Progress file
 <Include only with two or more objectives; otherwise delete this section. Fill the checklist from the Objectives.>
 
-Create `docs/plans/<issue>-progress.md` in your workspace with the content below. It is working state: never stage or commit it. Update it only after each objective's commit and whenever you stop. After a context reset I will re-paste this prompt; read the progress file first and continue from `Next` without re-planning.
+Create `docs/plans/<issue>-plan-progress.md` in your workspace with the content below. It is working state: never stage or commit it. Update it only after each objective's commit and whenever you stop. After a context reset I will re-paste this prompt; read the progress file first and continue from `Next` without re-planning.
 
     # <issue> progress
     - [ ] 1. <objective 1 title>
