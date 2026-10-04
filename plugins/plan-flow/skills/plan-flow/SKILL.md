@@ -117,6 +117,7 @@ And for the slices:
 - every canonical Security requirements line appears in the slice of each objective it touches and in the gates slice; standing invariants appear as the template's pointer, not a pasted table
 - a slice whose objective waits on an unmet external release or issue opens with a STOP line
 - the ship slice's start comment matches Decided, and its PR rows and issue keywords match the canonical PR plan
+- objective slices forbid issue comments; the ship slice owns the start comment and every `Decisions:` post from the progress file
 - the canonical prompt still passes every check above on its own
 
 Fix gaps. Then reply with a report of at most 25 lines: issue summary, root cause, design, security findings, edge cases, alternatives, open questions. Follow it with the handoff: the template's teammate workflow block, filled; the slice `--exec-print` names (default objective 1; `all` prints each slice) in its own fenced block; and one line listing the canonical prompt and every slice path. With `--no-prompt`, give the workflow block and the paths only. End by suggesting `/clear`.
