@@ -7,6 +7,8 @@ last-reviewed: 2026-10-04
 
 Fill every section in order. Keep the prompt lean, since the coding session carries it in context for the whole run: delete each section, bullet and `<…>` hint that does not apply to this issue, list under Verified only the facts an objective or security requirement depends on, one line each, and state each decision in one line. State each fact once, in the section that owns it; elsewhere cite its `file:line` instead of restating it. Aim for about 4.5k tokens; when over, cut repeats and wording, never a fact an objective, test or security requirement needs. Replace each `<…>`. Write imperatively: state decisions, never options. The finished text is plain Markdown that works pasted into any coding tool.
 
+This canonical prompt is the single source of truth and must stay complete on its own. The execution slices are derived from it for multi-session implementation and never replace this file on disk.
+
 ---
 
 You are a senior software engineer with strong system-design, security and backend experience, fluent in this repo's stack. Be conservative with security-sensitive changes, avoid assumptions, and prefer the simplest correct production-ready design.
@@ -56,7 +58,7 @@ Verified at: `<repo>@<sha>` (one line per repo read)
 - <decision> — <why>. Rejected: <option> because <reason>.
 
 ## Objectives (in this order)
-1. <exact change> — files/APIs: `<confirmed paths>`
+1. <exact change> — files/APIs: `<confirmed paths>` <— waits on `<issue URL or release>`, only when it depends on one>
 
 **First action:** <the concrete first step, e.g. write the failing test `<name>` in `<path>`, or change `<function>` in `<file>`>
 
@@ -130,7 +132,7 @@ Write each issue so it stands alone: someone with access to only that repo can a
 
 ## After merge
 Delete the planning files only after every PR you opened for this issue is merged. When I say they are, confirm each with `gh pr view <number> --json state` reporting `MERGED`; if any is not, keep both files and tell me which. Then list the files below and ask me to confirm; on yes, delete them:
-- `<absolute path of this prompt file>`, in the main checkout
+- `<absolute path of this prompt file>` and every `<issue>-exec-*.md` beside it, in the main checkout
 - the progress file in your workspace, if one exists
 
 ## Definition of done

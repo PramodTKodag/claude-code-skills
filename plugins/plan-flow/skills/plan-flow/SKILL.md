@@ -1,21 +1,21 @@
 ---
 name: plan-flow
 description: Investigates a GitHub issue against the real code and writes a self-contained implementation prompt for a separate coding session, without implementing anything. Use when the teammate runs /plan-flow or wants an issue investigated, grilled, security-audited and cross-service-checked before a different AI session or tool implements it.
-argument-hint: "<issue-number-or-url> [--worktree] [--light] [--greenfield] [--no-prompt]"
+argument-hint: "<issue-number-or-url> [--worktree] [--light] [--greenfield] [--no-prompt] [--exec-print <n|gates|ship|all>]"
 disable-model-invocation: true
 ---
 
 # Plan Flow
 
-Investigate one GitHub issue, then write the implementation prompt another session will execute. This session reads, researches, asks, and writes one prompt file. It edits no product code, opens no branch or PR, and saves no memory.
+Investigate one GitHub issue, then write the implementation prompt another session will execute. This session reads, researches, asks, and writes the prompt file and its execution slices. It edits no product code, opens no branch or PR, and saves no memory.
 
-Input: issue link or number, optional `--worktree` (dashes optional), optional `--light`, optional `--greenfield`, optional `--no-prompt`, plus any notes the teammate pasted. Missing issue → ask.
+Input: issue link or number, optional `--worktree` (dashes optional), optional `--light`, optional `--greenfield`, optional `--no-prompt`, optional `--exec-print <n|gates|ship|all>`, plus any notes the teammate pasted. Missing issue → ask.
 
 **Checkout mode.** `--worktree` → the prompt directs implementation into a new git worktree. Omitted → the current checkout. Fix the mode now and state it in the preflight message. This session creates no worktree or branch; the coding session does.
 
 **Compatibility mode.** `--greenfield` → the product has no live users, consumers or stored data to preserve, so the plan carries no compatibility or migration work. Omitted → existing consumers and data are assumed, and a breaking change needs a migration or rollout path. Fix the mode now and state it in the preflight message.
 
-**Output mode.** Default: save the prompt file and print the same text in one fenced block. `--no-prompt` → save the file only and print no prompt text.
+**Output mode.** Always save the canonical prompt and its execution slices. Default: print the teammate workflow, objective 1's slice in one fenced block, and the file paths. `--exec-print` picks the slice to print: an objective number, `gates`, `ship`, or `all`. `--no-prompt` → print the workflow and paths only.
 
 ## Tiers
 
@@ -88,9 +88,11 @@ Settle current behavior, root cause, target design, and concrete changes (files 
 
 Security-sensitive per the profile (auth, keys or crypto, payments, permissions, or paths it lists): run an independent plan review on Deep before writing. Use a different-vendor model when the tool offers one; else a fresh-context subagent labelled "not independent". Act on P0/P1; on disagreement, ask.
 
-## 8. Write the prompt
+## 8. Write the prompt and its slices
 
-Read `references/prompt-template.md` now, not earlier, and fill it. With two or more objectives, fill its Progress block with the objective titles; the coding session creates that file, never this one. With more than one PR, fill its PR plan from the split. Save `docs/plans/<issue>-implementation-prompt.md` in the anchor repo; never stage it, and say so if the path is not git-ignored. Print the same text in one fenced block for copying: saving the file never replaces printing it. With `--no-prompt`, print no prompt text and give only the file path in the report.
+Read `references/prompt-template.md` now, not earlier, and fill it. With two or more objectives, fill its Progress block with the objective titles; the coding session creates that file, never this one. With more than one PR, fill its PR plan from the split. Save it as the canonical prompt, `docs/plans/<issue>-implementation-prompt.md` in the anchor repo.
+
+Then read `references/execution-handoff-template.md` and derive from the canonical prompt one `<issue>-exec-obj-<n>.md` per objective, `<issue>-exec-gates.md` and `<issue>-exec-ship.md`, saved beside it. Never stage any file under `docs/plans/`; say so if the path is not git-ignored.
 
 Self-check before handing over, by one Standard subagent or inline when subagents are off:
 - every acceptance criterion maps to an objective
@@ -107,13 +109,22 @@ Self-check before handing over, by one Standard subagent or inline when subagent
 - a security-sensitive issue per the profile carries the pre-PR diff review line
 - no secrets, key material, or AI-tool names
 
-Fix gaps. Then reply with a report of at most 25 lines: issue summary, root cause, design, security findings, edge cases, alternatives, open questions. End by suggesting `/clear`.
+And for the slices:
+- one objective slice per canonical objective, plus the gates and ship slices
+- each objective slice meets the template's carry and leave-out lists: one objective, one focused test command, no full gate suite, no push, PR or issue step
+- every canonical Security requirements line appears in the slice of each objective it touches and in the gates slice
+- a slice whose objective waits on an unmet external release or issue opens with a STOP line
+- the ship slice's start comment matches Decided, and its PR rows and issue keywords match the canonical PR plan
+- the canonical prompt still passes every check above on its own
+
+Fix gaps. Then reply with a report of at most 25 lines: issue summary, root cause, design, security findings, edge cases, alternatives, open questions. Follow it with the handoff: the template's teammate workflow block, filled; the slice `--exec-print` names (default objective 1; `all` prints each slice) in its own fenced block; and one line listing the canonical prompt and every slice path. With `--no-prompt`, give the workflow block and the paths only. End by suggesting `/clear`.
 
 ## Rules
 
 - Tokens: summaries over dumps, line ranges over whole files, no re-reads, scope to the delta.
 - Use the repo's own domain terms.
 - The prompt names no tool-specific commands or skills.
-- Print the finished prompt in a fenced block unless `--no-prompt`; the saved file alone is not a handoff.
+- Print the teammate workflow block on every handoff, and the chosen slice in a fenced block unless `--no-prompt`; saved files alone are not a handoff.
+- Interactive implementation runs from the slices, one new session each, never from a pasted canonical prompt.
 - The prompt edits one repo, the anchor repo. Changes elsewhere go to issues, never to objectives.
-- No memory writes. No product edits. Git is read-only except the one prompt file.
+- No memory writes. No product edits. Git is read-only; write only the prompt and slice files under `docs/plans/`.

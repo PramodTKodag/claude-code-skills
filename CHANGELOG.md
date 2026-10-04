@@ -14,9 +14,16 @@ minor/patch semantics are loose while it's greenfield.
 - **plan-flow 0.3.0 — after-merge cleanup.** The prompt tells the coding session to delete the prompt file
   and the progress file once every PR it opened for the issue is merged and you confirm. If any PR is
   still open it keeps both files and says which.
-- **plan-flow 0.3.0 — `--no-prompt`.** By default the skill saves the prompt file and prints the same text
-  in one fenced block; saving the file never replaces printing it. `--no-prompt` saves the file only and
-  prints no prompt text.
+- **plan-flow 0.3.0 — execution slices.** Besides the canonical prompt, the skill writes one
+  `<issue>-exec-obj-<n>.md` per objective, `<issue>-exec-gates.md` (validation only) and
+  `<issue>-exec-ship.md` (decision record, side findings, push, PRs linked to the issue, cross-service
+  issues). The teammate pastes each into a new coding session in order, so no session carries the whole
+  issue or a long thread. Each objective slice keeps the facts, decisions and security requirements its
+  objective touches, one focused test command and the three mandatory stops, then commits and stops.
+  The canonical prompt stays complete for tools that run the whole issue in one session.
+- **plan-flow 0.3.0 — handoff output.** Every handoff prints a how-to-run block, objective 1's slice in a
+  fenced block and the file paths. `--exec-print <n|gates|ship|all>` picks the slice to print;
+  `--no-prompt` prints the how-to-run block and paths only.
 - **plan-flow 0.3.0 — single-repo scope rule.** The planner writes objectives and a workspace for the
   anchor repo only, and the prompt tells the coding session to change nothing in any other repository or
   checkout: when an objective needs a change elsewhere it asks, files an issue once agreed, and edits
