@@ -20,6 +20,8 @@ minor/patch semantics are loose while it's greenfield.
   issues). The teammate pastes each into a new coding session in order, so no session carries the whole
   issue or a long thread. Each objective slice keeps the facts, decisions and security requirements its
   objective touches, one focused test command and the three mandatory stops, then commits and stops.
+  A canonical objective blocked on an external release or issue carries `waits on:` with a check
+  command, and its slice opens with a STOP line.
   The canonical prompt stays complete for tools that run the whole issue in one session, and its Run rule
   governs only such a run. Slices copy the issue's own security requirements verbatim and cite standing
   invariants by pointer instead of pasting their tables.

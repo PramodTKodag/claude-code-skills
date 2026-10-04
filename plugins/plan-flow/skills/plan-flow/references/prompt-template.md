@@ -58,7 +58,7 @@ Verified at: `<repo>@<sha>` (one line per repo read)
 - <decision> — <why>. Rejected: <option> because <reason>.
 
 ## Objectives (in this order)
-1. <exact change> — files/APIs: `<confirmed paths>` <— waits on `<issue URL or release>`, only when it depends on one>
+1. <exact change> — files/APIs: `<confirmed paths>` <— waits on: `<owner issue or release>`; check: `<command that shows it is met>`. Only when the objective depends on an unreleased library, an open issue or another external gate; execution slices turn this into their STOP line.>
 
 **First action:** <the concrete first step, e.g. write the failing test `<name>` in `<path>`, or change `<function>` in `<file>`>
 
@@ -83,7 +83,8 @@ Create `docs/plans/<issue>-plan-progress.md` in your workspace with the content 
     PRs: none opened
 
 ## Security requirements
-<authn/authz, ownership, key and custody boundaries, replay, input validation, logging of sensitive data — only those this change touches. State which existing controls must stay intact.>
+<authn/authz, ownership, key and custody boundaries, replay, input validation, logging of sensitive data — only the issue-specific behaviors this change touches (auth path, storage, events and the like). State which existing controls must stay intact. Do not paste the repo's invariant tables; cite them in the Binding line below.>
+Binding: obey <the `AGENTS.md` or `CLAUDE.md` section that holds the invariants>; <ADR ids already under Decided>. <Delete this line when the repo has neither.>
 
 ## Constraints
 - **Compatibility.** <Keep the variant for the chosen mode; delete the other.>

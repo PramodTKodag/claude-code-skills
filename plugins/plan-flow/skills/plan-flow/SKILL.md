@@ -99,6 +99,7 @@ Self-check before handing over, by one Standard subagent or inline when subagent
 - every verified fact carries `file:line`; assumptions are flagged; the Verified block pins each repo's commit
 - no open option or unanswered question remains; each decision sits under "Decided" with its rejected alternatives
 - a cold session can start objective 1 with no further research: objectives name confirmed paths, tests are named, validation commands are exact, the first action is concrete
+- every objective blocked on an unreleased library, an open issue or another external gate ends with a `waits on:` mark and its check command
 - the prompt opens with the implement-now directive and the run rule, and lists only the three mandatory stops
 - the Workspace section matches the chosen mode with a resolved path, branch and base, and Validation uses that mode's commands
 - the Workspace names one checkout, the anchor repo; every objective edits only it, and a needed change in another repo appears under Cross-service follow-up, never as an objective
