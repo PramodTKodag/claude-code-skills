@@ -43,6 +43,13 @@ minor/patch semantics are loose while it's greenfield.
   changes, phases to PRs, tier, out of scope, hard stops. No plan narration after earlier steps. The
   run-mode question moves ahead of the gate, so approving the plan starts execution with no further ask.
   Security and Tier 3 risks stay in full prose.
+- **plan-flow 0.3.0 — run rule.** The prompt tells the coding session to carry the work through to the
+  Definition of done in one run: commit each objective, push, open each PR in order and start the next
+  objective without asking or stopping to report progress. It pauses only for a Quick check stop, a
+  change needed in another repo, an oversized PR, or side findings to decide before a PR, and that
+  question is asked only when the list has items. A security vulnerability is reported as soon as it is
+  found and work continues; it stops the run only when it sits in code the objectives change or makes an
+  objective unsafe to ship.
 - **plan-flow 0.3.0 — token cuts.** Code readers run one per repo, covering all of its targets, instead
   of one per file, since every spawn loads a fresh base context; security-sensitive paths keep their own
   Standard reader and every target is still read. Step 1 reuses root instructions the tool already
