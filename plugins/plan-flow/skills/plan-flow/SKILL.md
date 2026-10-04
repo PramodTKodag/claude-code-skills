@@ -49,7 +49,7 @@ Use the tool's structured-question UI; else numbered plain text. 2–4 options, 
 
 ## 1. Context
 
-Read root `AGENTS.md` or `CLAUDE.md` if present and follow its routing. Read the anchor repo's profile if present: `.agents/dev-flow-context.md` or `.claude/dev-flow-context.md` (guardrails, neighbors, downstream consumers, test convention, base branch). Neither exists → infer the base branch, validation commands and security-sensitive paths from the repo's build files and CI config, and confirm them once.
+Root `AGENTS.md` or `CLAUDE.md`, if present: reuse it when the tool already loaded it, else read it. Follow only the routing this issue needs, and skip references marked on-demand. Read the anchor repo's profile if present: `.agents/dev-flow-context.md` or `.claude/dev-flow-context.md` (guardrails, neighbors, downstream consumers, test convention, base branch). Neither exists → infer the base branch, validation commands and security-sensitive paths from the repo's build files and CI config, and confirm them once.
 
 Resolve for the chosen checkout mode: base branch, branch pattern, worktree path naming, and the validation commands that exercise the right tree (some stacks false-green when a worktree is tested with main-checkout targets). Mode-specific values missing → ask.
 
@@ -61,7 +61,7 @@ If the body has `Verified at: <repo>@<sha>` and a `Read first` list: `git fetch`
 
 ## 3. Real code, delta only
 
-Read the paths the issue changes and each neighbor it relies on, in line ranges. Source is truth, not docs, comments, or prior summaries. One reader per target, parallel when subagents are on; security-sensitive paths read at Standard. Readers return summaries with `file:line`.
+Read the paths the issue changes and each neighbor it relies on, in line ranges. Source is truth, not docs, comments, or prior summaries. With subagents on, run one reader per repo covering all of its targets, parallel across repos: every spawn loads a fresh base context, so a reader per file multiplies that cost. A repo's security-sensitive paths go to their own reader at Standard. Readers return one summary per target with `file:line`.
 
 Tag every fact **verified** (read, with `file:line`) or **assumed**. Record the commit each repo was read at (`git rev-parse HEAD`, noting uncommitted changes to the paths read); the prompt pins it.
 
@@ -102,7 +102,7 @@ Self-check before handing over, by one Standard subagent or inline when subagent
 - the Workspace names one checkout, the anchor repo; every objective edits only it, and a needed change in another repo appears under Cross-service follow-up, never as an objective
 - a Progress block exists exactly when there are two or more objectives, and its titles match the Objectives
 - a PR plan exists exactly when the split chose more than one PR; every objective sits in exactly one row, and each row names its branch and base
-- the prompt is lean: no not-applicable section or leftover `<…>` hint, and Verified lists only facts an objective or security requirement depends on
+- the prompt is lean: no not-applicable section or leftover `<…>` hint, Verified lists only facts an objective or security requirement depends on, and no fact is restated across sections
 - the Issue line holds the full issue URL; the hard rule, hygiene, new-decisions-and-findings, after-merge (with the prompt file's absolute path), compatibility and cross-service blocks are present, and the compatibility block matches the chosen mode
 - a security-sensitive issue per the profile carries the pre-PR diff review line
 - no secrets, key material, or AI-tool names

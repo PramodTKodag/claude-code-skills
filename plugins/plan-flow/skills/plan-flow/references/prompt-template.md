@@ -5,7 +5,7 @@ last-reviewed: 2026-10-04
 
 # Implementation prompt template
 
-Fill every section in order. Keep the prompt lean, since the coding session carries it in context for the whole run: delete each section, bullet and `<…>` hint that does not apply to this issue, list under Verified only the facts an objective or security requirement depends on, and state each decision in one line. Replace each `<…>`. Write imperatively: state decisions, never options. The finished text is plain Markdown that works pasted into any coding tool.
+Fill every section in order. Keep the prompt lean, since the coding session carries it in context for the whole run: delete each section, bullet and `<…>` hint that does not apply to this issue, list under Verified only the facts an objective or security requirement depends on, one line each, and state each decision in one line. State each fact once, in the section that owns it; elsewhere cite its `file:line` instead of restating it. Aim for about 4.5k tokens; when over, cut repeats and wording, never a fact an objective, test or security requirement needs. Replace each `<…>`. Write imperatively: state decisions, never options. The finished text is plain Markdown that works pasted into any coding tool.
 
 ---
 
@@ -15,7 +15,7 @@ You are a senior software engineer with strong system-design, security and backe
 
 **Hard rule:** mention no AI tool, assistant or model anywhere: not in code, comments, commits (including co-author trailers), issues, issue comments, PRs or PR comments, and add no "generated with" footers. Expose no internal reasoning.
 
-**Scope rule:** change files, branches and PRs only in this repo's workspace. Never edit, stage, commit or push in any other repository or checkout: not a sibling clone, a submodule, or another worktree. When an objective needs a change elsewhere, make no edit there: ask me how to proceed, file an issue in that repo once I agree (format under Cross-service follow-up), and continue only with work that does not depend on it.
+**Scope rule:** change files, branches and PRs only in this repo's workspace. Never edit, stage, commit or push in any other repository or checkout (sibling clone, submodule, other worktree). When an objective needs a change elsewhere, ask me, file an issue in that repo once I agree (format under Cross-service follow-up), and continue only with work that does not depend on it.
 
 # Task: <issue title>
 
@@ -61,7 +61,7 @@ Verified at: `<repo>@<sha>` (one line per repo read)
 ## PR plan
 <Include only when the split chose more than one PR; otherwise delete this section. One row per PR in merge order; every objective sits in exactly one row; name each branch like `<branch>`.>
 
-Open one PR per row, in this order. The first PR targets `<base branch>`. Cut each later branch from the previous PR's branch tip in the same workspace, and target its PR at that branch.
+Open one PR per row, in order, each against the base its row names. Cut each later branch from the previous PR's branch tip in the same workspace.
 1. `<branch>` → `<base branch>` — objectives <1–2>
 2. `<branch-2>` → `<branch>` — objective <3>
 
@@ -86,9 +86,8 @@ Create `docs/plans/<issue>-plan-progress.md` in your workspace with the content 
   - Greenfield: there are no live users, consumers or stored data to preserve. Add no compatibility shims, legacy paths, dual support or old-data migrations in product code. Change contracts cleanly.
   - Existing consumers: keep public contracts and stored data working. Ship every breaking change with the migration or rollout path named under Decided.
 - Smallest correct diff. No speculative abstraction, dead code, temporary fixes, hardcoded workarounds, debug-only logic or special-case headers.
-- Follow the repo's own conventions and layout. Use DDD terms only where the repo already uses them.
+- Follow the repo's own conventions, layout and domain terms; use DDD terms only where the repo already uses them.
 - Clear names, small focused modules, idiomatic code, proper error handling, useful structured logs. Production code uses real flows and data; fake data only in tests.
-- Use the repo's own domain terms.
 
 ## Read first
 - `<path>` — <why>
@@ -100,7 +99,7 @@ Create `docs/plans/<issue>-plan-progress.md` in your workspace with the content 
 <the repo's test convention; the behavior, security, integration and regression tests to add, by name; existing coverage to leave alone>
 
 ## Validation
-<exact format, lint, test, build commands from the repo profile for the chosen workspace mode. In worktree mode, state that main-checkout targets exercise the wrong tree and use the profile's worktree commands. Run the full set once before pushing; never skip git hooks.>
+<exact format, lint, test, build commands from the repo profile for the chosen workspace mode, one line each; where one Make target runs the same checks, name that target instead of its parts. In worktree mode, state that main-checkout targets exercise the wrong tree and use the profile's worktree commands. Run the full set once before pushing; never skip git hooks.>
 
 <Security-sensitive issues only; delete this paragraph otherwise.> Before opening the PR, re-read your full diff as a security reviewer against the Security requirements above, fix what you find, and report what you checked in your final message.
 
@@ -109,9 +108,9 @@ Create `docs/plans/<issue>-plan-progress.md` in your workspace with the content 
 - Before opening any PR, check its diff. If it outgrew a reviewably small PR (many files, several hundred lines, or mixed concerns), stop and ask me whether to split it further.
 
 ## New decisions and side findings
-**Decisions.** Before objective 1, post one comment on the issue (`gh issue comment`): the root cause and target design in one line each, every item under Decided (decision, why, rejected alternative), and the compatibility mode with its migration or rollout path. Then post a comment for every later decision this prompt does not already settle: a deviation from it, an answer I gave you, how a side finding was resolved. State the decision, why, and the alternative you rejected. Post later comments at the points where you update the progress file, or before opening the PR when there is none, and mark each posted decision, the start comment included, under `Decisions`. Write plain prose: no progress chatter, code, secrets, key material or exploit detail.
+**Decisions.** Before objective 1, post one issue comment (`gh issue comment`): root cause and target design in one line each, every Decided item (decision, why, rejected alternative), and the compatibility mode with its migration or rollout path. Then comment every later decision this prompt does not settle (a deviation from it, an answer I gave you, how a side finding was resolved): decision, why, rejected alternative. Post them when you update the progress file, or before opening the PR when there is none, and mark each posted decision, the start comment included, under `Decisions`. Plain prose only: no progress chatter, code, secrets, key material or exploit detail.
 
-**Side findings.** You may find a defect or gap outside the objectives, in this repo or another. Do not fix or file it on your own. Note it in one line (repo, `file:line`, what is wrong) under `Findings` when the progress file exists, else in your notes; keep implementing; and show me the list once before opening the PR. For each item, ask me: another repo → file an issue there, yes or no; this repo → file an issue, or fold it into this PR. Report a security vulnerability immediately instead of waiting. Write approved issues in the format under Cross-service follow-up. Everything you post follows the hard rule above.
+**Side findings.** A defect or gap outside the objectives, in this repo or another: do not fix or file it on your own. Note it in one line (repo, `file:line`, what is wrong) under `Findings`, or in your notes when there is no progress file, and keep implementing. Before opening the PR, show me the list once and ask per item: another repo → file an issue there, yes or no; this repo → file an issue, or fold it into this PR. Report a security vulnerability immediately instead of waiting. Write approved issues in the Cross-service follow-up format. Everything you post follows the hard rule.
 
 ## Cross-service follow-up (after implementation and green validation)
 Candidate consumers of what you changed:
@@ -127,7 +126,7 @@ Treat the list as a starting point. Diff the final contract (APIs, types, error 
 Write each issue so it stands alone: someone with access to only that repo can act on it. List repos you checked and found unaffected, with one line of evidence each. Give me every issue link in your final message.
 
 ## After merge
-Delete the planning files only after every PR you opened for this issue is merged (one PR: that PR). When I tell you they are merged, confirm each with `gh pr view <number> --json state` reporting `MERGED`; if any is not, keep both files and tell me which. Then list the files below and ask me to confirm. On yes, delete them:
+Delete the planning files only after every PR you opened for this issue is merged. When I say they are, confirm each with `gh pr view <number> --json state` reporting `MERGED`; if any is not, keep both files and tell me which. Then list the files below and ask me to confirm; on yes, delete them:
 - `<absolute path of this prompt file>`, in the main checkout
 - the progress file in your workspace, if one exists
 
