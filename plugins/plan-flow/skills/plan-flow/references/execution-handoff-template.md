@@ -154,7 +154,7 @@ Print this block, filled, on every handoff.
     1. Open **only** the anchor checkout named in Workspace: `<path>` (not a parent monorepo unless that is the anchor).
     2. **New session** → paste **only** the contents of `docs/plans/<issue>-exec-obj-1.md`. It implements and commits once this objective's tests pass.
     3. **Clear context** (new session). Do not continue the old thread.
-    4. Paste **only** `<issue>-exec-obj-2.md`, then `<issue>-exec-obj-3.md`, … in order, each in a new session.
+    4. For each remaining objective (none when there is only one): **new session** → paste **only** `<issue>-exec-obj-<n>.md` in order.
     5. If a slice starts with **STOP** (dependency not ready), skip it until unblocked. Gates and ship handle only PR rows whose objectives are all done.
     6. **Clear context** → paste **only** `<issue>-exec-gates.md`, **or** run its commands yourself.
     7. **Clear context** → paste **only** `<issue>-exec-ship.md`. It posts the decision record, asks about side findings, pushes and opens the PRs linked to the issue. You merge, in PR plan order. Opening the PRs yourself instead? Skip pasting it and copy the start comment, each row's `Closes`/`Refs` keyword and the cross-service issues from it.
