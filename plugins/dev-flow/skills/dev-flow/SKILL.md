@@ -314,40 +314,51 @@ No assumption stands in for reading the issue or the real code the change touche
 
 **Enter plan mode (`EnterPlanMode`) before planning.** Steps 3 and 4 run entirely inside it, so the plan is
 written before any edit (and on Opus with the `opusplan` model setting). Write everything into the plan-mode
-plan file — layman summary first, then the phases. Do not call `ExitPlanMode` until the end of Step 4.
+plan file — the plan summary first, then the phases. Do not call `ExitPlanMode` until the end of Step 4.
 
 1. Run **`/grill-me`** on the findings until the decision tree is resolved.
-2. Draft the plan in **short, plain, layman language** — no essays. What we do, why, in a few lines — as the
-   top of the plan file.
+2. Draft the **plan summary** as the top of the plan file — **caveman, few words, one line each**:
+   - **Fixing** — what is broken or missing.
+   - **Win** — how the fix helps users and the team.
+   - **If skipped** — the pain users and the team keep if we don't fix it.
+   - **Change** — what the code will do differently.
+   - **PRs** — phases → PRs, run mode + execution skill.
+   - **Tier · Out of scope · Hard stops.**
+
+   **A security or Tier 3 risk stays in full plain prose** — never compress it to save words.
 3. **Tier 3 only:** run `plan-review` ([Second model](references/dev-flow-reference.md) › table) on the draft;
    triage findings before moving on.
 
 ## Step 4 — Phased plan
 
 Still in plan mode, turn the drafted shape into a **phase-wise** plan via `/writing-plans`, written into the
-plan file after the layman summary. Each phase = a coherent slice, an
+plan file after the plan summary. Each phase = a coherent slice, an
 ordered list of tasks. **Phases and PRs are not 1:1** — the unit is a *reviewably small, coherent PR*, so a
 single PR may bundle several tightly-related phases, or one large phase may stand alone. **Group phases into
 PRs automatically by default:** the manager proposes the grouping in the plan and proceeds — no ask on a
 single-phase plan (always one PR). **Only when the plan has more than one phase, ask the teammate once** —
 caveman, `AskUserQuestion`, recommended pick marked: (a) bundle the phases into one PR *(Recommended when
 tightly coupled)*, (b) one PR per phase, or (c) a custom split. Record the result in the ledger (`PRs:` line —
-which phases map to which PR) so a warm resume keeps it without re-asking. **Call `ExitPlanMode` once, here, at
-the end of Step 4 — that approval is the single plan gate;** execution then continues outside plan mode (on
+which phases map to which PR) so a warm resume keeps it without re-asking. Ask the **run mode** (Step 5
+execution gate) now too — in the same `AskUserQuestion` call as the PR split when there is one — so nothing is
+left to ask after approval. **Explain the plan once, here:** no plan narration after earlier steps — print the
+plan summary in chat right before the approval prompt, then **call `ExitPlanMode` once, at the end of Step 4,
+and wait — that approval is the single plan gate and the go signal:** on approval, start Step 5's first task
+with no further ask; on edits, revise and re-gate. Execution continues outside plan mode (on
 Sonnet with `opusplan`). **After approval, create the ledger:** `mkdir -p docs/plans/` in the anchor, write the
 plan into `docs/plans/<issue>-progress.md` from the reference template, then add the
 `project_<svc>_<issue>_in_progress` memory pointer.
 
 ## Step 5 — Phase loop
 
-**Execution gate — settle two things before the first task.**
+**Execution gate — both picks are settled in Step 4, before the plan gate**, so approval means go.
 
 1. **Execution skill — the manager's call** (judgment, by the nature of the change; honor this repo's stated
    convention if the context file names one): **`/tdd`** (red → green → refactor) when the change
    has testable behavior a failing test should pin first; or **`/executing-plans`** (structured plan-walk) for
    a mechanical / structural change where failing-test-first isn't the natural unit. State which and why in one
-   line; do **not** ask the teammate for this.
-2. **Run mode — the teammate's call:** stop and ask — caveman, `AskUserQuestion`, recommended pick marked:
+   line in the plan summary; do **not** ask the teammate for this.
+2. **Run mode — the teammate's call:** asked in Step 4 — caveman, `AskUserQuestion`, recommended pick marked:
    - **Subagent-driven (Recommended)** — dispatch each task to **`dev-flow-executor`** (charter baked in; you
      inject this repo's guardrails). Best for a large, multi-phase / multi-PR change: token-efficient, keeps
      the manager's context clean, each task an isolated worker report. The default the rest of this skill assumes.
