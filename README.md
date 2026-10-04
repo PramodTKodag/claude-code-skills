@@ -120,7 +120,8 @@ executes. It never edits product code.
 /plan-flow 123 --worktree      # the prompt directs the coding session into a git worktree
 /plan-flow 123 --light         # small issue: run the whole session on a mid-tier model
 /plan-flow 123 --greenfield    # no live users or data: plan without compatibility work
-/plan-flow 123 --no-prompt     # save the prompt file only; print no prompt text
+/plan-flow 123 --no-prompt     # save the files; print only the how-to-run block and paths
+/plan-flow 123 --exec-print all  # print every execution slice, not just objective 1's
 ```
 
 - **Presets.** `Full` (default) plans on a deep-reasoning model, optionally with cheap subagents for
@@ -129,13 +130,17 @@ executes. It never edits product code.
   decision.
 - **Compatibility.** The default assumes existing consumers and data, so breaking changes get a
   migration or rollout path. `--greenfield` drops that work.
-- **Output.** `docs/plans/<issue>-implementation-prompt.md` (never staged), also printed for copying unless you pass `--no-prompt`.
-  The prompt pins the commit its facts were verified at, tells the coding session to implement
+- **Output.** The canonical prompt `docs/plans/<issue>-implementation-prompt.md` plus execution slices beside it, all
+  never staged: one `<issue>-exec-obj-<n>.md` per objective, `<issue>-exec-gates.md` and `<issue>-exec-ship.md`. It prints
+  a how-to-run block and objective 1's slice. Paste each slice into a new coding session in order, so no session
+  carries the whole issue or a long thread; the ship slice posts the decision record, pushes, and opens the PRs
+  linked to the issue. The canonical prompt stays the full handoff for a tool that runs the whole issue in one session.
+  The canonical prompt pins the commit its facts were verified at, tells the coding session to implement
   immediately, keep a slim progress file, post one start comment with the settled decisions and a comment
   for each new one on the issue, hold side findings for one batched question, review its own diff for security before the PR (on security-sensitive
   issues), and, after validation, file detailed issues in any affected consumer repos. The coding session edits only the repo it runs in;
   a change needed elsewhere becomes an issue, never an edit. Once every PR for the issue is merged and you
-  confirm, it deletes the prompt file and the progress file.
+  confirm, it deletes the planning files.
 - **PR split.** With two or more objectives, it asks once: one PR, one PR per objective, or a custom
   split. The prompt then carries a PR plan (stacked branches in merge order). The coding session asks
   again only if a PR outgrows that plan.

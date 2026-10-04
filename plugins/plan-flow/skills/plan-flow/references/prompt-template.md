@@ -7,6 +7,8 @@ last-reviewed: 2026-10-04
 
 Fill every section in order. Keep the prompt lean, since the coding session carries it in context for the whole run: delete each section, bullet and `<…>` hint that does not apply to this issue, list under Verified only the facts an objective or security requirement depends on, one line each, and state each decision in one line. State each fact once, in the section that owns it; elsewhere cite its `file:line` instead of restating it. Aim for about 4.5k tokens; when over, cut repeats and wording, never a fact an objective, test or security requirement needs. Replace each `<…>`. Write imperatively: state decisions, never options. The finished text is plain Markdown that works pasted into any coding tool.
 
+**Multi-session implementation.** This canonical prompt is the single source of truth and must stay complete for one long implementing session. For interactive coding sessions the teammate runs the execution slices from `execution-handoff-template.md` instead (`exec-obj-*`, `exec-gates`, `exec-ship`), one slice per new session; they never replace this file on disk. The Run rule below governs only a session that runs this whole prompt: objective slices never push, open PRs or run every objective, and that ship work belongs to `exec-ship.md`. When the teammate uses execution slices, objective slices never comment on the issue; they log choices only under `Decisions:` in `docs/plans/<issue>-plan-progress.md`. The start comment and every posted decision comment happen in `exec-ship.md` only. The **New decisions and side findings** section below applies to a single session that runs this whole prompt, not to slice sessions.
+
 ---
 
 You are a senior software engineer with strong system-design, security and backend experience, fluent in this repo's stack. Be conservative with security-sensitive changes, avoid assumptions, and prefer the simplest correct production-ready design.
@@ -56,14 +58,15 @@ Verified at: `<repo>@<sha>` (one line per repo read)
 - <decision> — <why>. Rejected: <option> because <reason>.
 
 ## Objectives (in this order)
-1. <exact change> — files/APIs: `<confirmed paths>`
+1. <exact change> — files/APIs: `<confirmed paths>` <— waits on: `<owner issue or release>`; check: `<command that shows it is met>`. Only when the objective depends on an unreleased library, an open issue or another external gate; execution slices turn this into their STOP line.>
+<Each objective is one execution slice: big enough to justify its own session and focused test command; merge untestable fragments and fold sub-session edits into the objective they support.>
 
 **First action:** <the concrete first step, e.g. write the failing test `<name>` in `<path>`, or change `<function>` in `<file>`>
 
 ## PR plan
 <Include only when the split chose more than one PR; otherwise delete this section. One row per PR in merge order; every objective sits in exactly one row; name each branch like `<branch>`. The last row closes the issue; every earlier row refs it.>
 
-Open one PR per row, in order, each against the base its row names. Cut each later branch from the previous PR's branch tip in the same workspace.
+Open one PR per row, in order, each against the base its row names. Cut each later branch from the previous PR's branch tip in the same workspace. With more than one row, tell me in your final message to merge in row order and to check, before merging each later PR, that it now targets `<base branch>`: GitHub retargets it only when the branch below is deleted on merge, and `Closes` fires only on a merge into the default branch.
 1. `<branch>` → `<base branch>` — objectives <1–2> — `Refs #<issue>`
 2. `<branch-2>` → `<branch>` — objective <3> — `Closes #<issue>`
 
@@ -81,7 +84,8 @@ Create `docs/plans/<issue>-plan-progress.md` in your workspace with the content 
     PRs: none opened
 
 ## Security requirements
-<authn/authz, ownership, key and custody boundaries, replay, input validation, logging of sensitive data — only those this change touches. State which existing controls must stay intact.>
+<authn/authz, ownership, key and custody boundaries, replay, input validation, logging of sensitive data — only the issue-specific behaviors this change touches (auth path, storage, events and the like). State which existing controls must stay intact. Do not paste the repo's invariant tables; cite them in the Binding line below.>
+Binding: obey <the `AGENTS.md` or `CLAUDE.md` section that holds the invariants>; <ADR ids already under Decided>. <Delete this line when the repo has neither.>
 
 ## Constraints
 - **Compatibility.** <Keep the variant for the chosen mode; delete the other.>
@@ -129,8 +133,8 @@ Treat the list as a starting point. Diff the final contract (APIs, types, error 
 Write each issue so it stands alone: someone with access to only that repo can act on it. List repos you checked and found unaffected, with one line of evidence each. Give me every issue link in your final message.
 
 ## After merge
-Delete the planning files only after every PR you opened for this issue is merged. When I say they are, confirm each with `gh pr view <number> --json state` reporting `MERGED`; if any is not, keep both files and tell me which. Then list the files below and ask me to confirm; on yes, delete them:
-- `<absolute path of this prompt file>`, in the main checkout
+Delete the planning files only after every PR you opened for this issue is merged. When I say they are, confirm each with `gh pr view <number> --json state` reporting `MERGED`; if any is not merged, keep all planning files (canonical prompt, every exec slice, and the progress file if it exists) and tell me which PRs are still open. Then list the files below and ask me to confirm; on yes, delete them:
+- `<absolute path of this prompt file>` and every `<issue>-exec-*.md` beside it, in the main checkout
 - the progress file in your workspace, if one exists
 
 ## Definition of done
