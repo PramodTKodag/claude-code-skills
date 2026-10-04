@@ -1,6 +1,6 @@
 ---
 layer: repo
-last-reviewed: 2026-10-03
+last-reviewed: 2026-10-04
 ---
 
 # Implementation prompt template
@@ -58,10 +58,17 @@ Verified at: `<repo>@<sha>` (one line per repo read)
 
 **First action:** <the concrete first step, e.g. write the failing test `<name>` in `<path>`, or change `<function>` in `<file>`>
 
+## PR plan
+<Include only when the split chose more than one PR; otherwise delete this section. One row per PR in merge order; every objective sits in exactly one row; name each branch like `<branch>`.>
+
+Open one PR per row, in this order. The first PR targets `<base branch>`. Cut each later branch from the previous PR's branch tip in the same workspace, and target its PR at that branch.
+1. `<branch>` → `<base branch>` — objectives <1–2>
+2. `<branch-2>` → `<branch>` — objective <3>
+
 ## Progress file
 <Include only with two or more objectives; otherwise delete this section. Fill the checklist from the Objectives.>
 
-Create `docs/plans/<issue>-plan-progress.md` in your workspace with the content below. It is working state: never stage or commit it. Update it only after each objective's commit and whenever you stop. After a context reset I will re-paste this prompt; read the progress file first and continue from `Next` without re-planning.
+Create `docs/plans/<issue>-plan-progress.md` in your workspace with the content below. It is working state: never stage or commit it. Update it only after each objective's commit, each PR you open, and whenever you stop. After a context reset I will re-paste this prompt; read the progress file first and continue from `Next` without re-planning.
 
     # <issue> progress
     - [ ] 1. <objective 1 title>
@@ -69,6 +76,7 @@ Create `docs/plans/<issue>-plan-progress.md` in your workspace with the content 
     Next: objective 1 — <first action>
     Decisions: none
     Findings: none
+    PRs: none opened
 
 ## Security requirements
 <authn/authz, ownership, key and custody boundaries, replay, input validation, logging of sensitive data — only those this change touches. State which existing controls must stay intact.>
@@ -97,7 +105,8 @@ Create `docs/plans/<issue>-plan-progress.md` in your workspace with the content 
 <Security-sensitive issues only; delete this paragraph otherwise.> Before opening the PR, re-read your full diff as a security reviewer against the Security requirements above, fix what you find, and report what you checked in your final message.
 
 ## Repository hygiene
-- Work on a branch, open a PR against `<base branch>`, never merge it, and push nothing to `<base branch>` directly.
+- Work on a branch and open a PR against `<base branch>` (with a PR plan: each PR against the base its row names). Never merge a PR, and push nothing to `<base branch>` directly.
+- Before opening any PR, check its diff. If it outgrew a reviewably small PR (many files, several hundred lines, or mixed concerns), stop and ask me whether to split it further.
 
 ## New decisions and side findings
 **Decisions.** Before objective 1, post one comment on the issue (`gh issue comment`): the root cause and target design in one line each, every item under Decided (decision, why, rejected alternative), and the compatibility mode with its migration or rollout path. Then post a comment for every later decision this prompt does not already settle: a deviation from it, an answer I gave you, how a side finding was resolved. State the decision, why, and the alternative you rejected. Post later comments at the points where you update the progress file, or before opening the PR when there is none, and mark each posted decision, the start comment included, under `Decisions`. Write plain prose: no progress chatter, code, secrets, key material or exploit detail.
@@ -126,8 +135,8 @@ Delete the planning files only after every PR you opened for this issue is merge
 - Every objective met and verified against code
 - Required validation green
 - <Security-sensitive only: full-diff security review done and reported>
-- PR open, not merged
+- Every PR open (one per PR plan row when there is a plan), none merged
 - Every change is inside this repo's workspace
 - Cross-service issues filed, or none needed with evidence
 - Start comment and every new decision commented on the issue; side findings resolved as I decided
-- Final message lists changes, test results, PR link, issue links, deviations from this prompt, and anything not validated
+- Final message lists changes, test results, PR links, issue links, deviations from this prompt, and anything not validated

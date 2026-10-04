@@ -7,6 +7,10 @@ minor/patch semantics are loose while it's greenfield.
 ## [Unreleased]
 
 ### Added
+- **plan-flow 0.3.0 — PR split.** With two or more objectives the planner asks once: one PR, one PR per
+  objective, or a custom split, and records it under Decided. More than one PR adds a PR plan to the
+  prompt: one row per PR in merge order, each stacked on the previous PR's branch. The coding session
+  checks each diff before opening its PR and asks before splitting further.
 - **plan-flow 0.3.0 — after-merge cleanup.** The prompt tells the coding session to delete the prompt file
   and the progress file once every PR it opened for the issue is merged and you confirm. If any PR is
   still open it keeps both files and says which.

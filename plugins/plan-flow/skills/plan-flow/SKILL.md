@@ -84,11 +84,13 @@ Batch every question whose prerequisites are settled, each with a recommended an
 
 Settle current behavior, root cause, target design, and concrete changes (files and APIs confirmed in code). Compare alternatives on security, correctness, maintainability, complexity; recommend one. Tests follow the repo's own convention; TDD only where the repo uses it.
 
+**PR split.** One objective → one PR, no ask. Two or more → ask once, recommended first by coupling and size: one PR (objectives tightly coupled or small together), one PR per objective (each stands alone), or a custom split. Record the answer under "Decided"; with more than one PR, the prompt carries it as the PR plan.
+
 Security-sensitive per the profile (auth, keys or crypto, payments, permissions, or paths it lists): run an independent plan review on Deep before writing. Use a different-vendor model when the tool offers one; else a fresh-context subagent labelled "not independent". Act on P0/P1; on disagreement, ask.
 
 ## 8. Write the prompt
 
-Read `references/prompt-template.md` now, not earlier, and fill it. With two or more objectives, fill its Progress block with the objective titles; the coding session creates that file, never this one. Save `docs/plans/<issue>-implementation-prompt.md` in the anchor repo; never stage it, and say so if the path is not git-ignored. Print the same text in one fenced block for copying: saving the file never replaces printing it. With `--no-prompt`, print no prompt text and give only the file path in the report.
+Read `references/prompt-template.md` now, not earlier, and fill it. With two or more objectives, fill its Progress block with the objective titles; the coding session creates that file, never this one. With more than one PR, fill its PR plan from the split. Save `docs/plans/<issue>-implementation-prompt.md` in the anchor repo; never stage it, and say so if the path is not git-ignored. Print the same text in one fenced block for copying: saving the file never replaces printing it. With `--no-prompt`, print no prompt text and give only the file path in the report.
 
 Self-check before handing over, by one Standard subagent or inline when subagents are off:
 - every acceptance criterion maps to an objective
@@ -99,6 +101,7 @@ Self-check before handing over, by one Standard subagent or inline when subagent
 - the Workspace section matches the chosen mode with a resolved path, branch and base, and Validation uses that mode's commands
 - the Workspace names one checkout, the anchor repo; every objective edits only it, and a needed change in another repo appears under Cross-service follow-up, never as an objective
 - a Progress block exists exactly when there are two or more objectives, and its titles match the Objectives
+- a PR plan exists exactly when the split chose more than one PR; every objective sits in exactly one row, and each row names its branch and base
 - the prompt is lean: no not-applicable section or leftover `<…>` hint, and Verified lists only facts an objective or security requirement depends on
 - the Issue line holds the full issue URL; the hard rule, hygiene, new-decisions-and-findings, after-merge (with the prompt file's absolute path), compatibility and cross-service blocks are present, and the compatibility block matches the chosen mode
 - a security-sensitive issue per the profile carries the pre-PR diff review line

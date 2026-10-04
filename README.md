@@ -136,6 +136,9 @@ executes. It never edits product code.
   issues), and, after validation, file detailed issues in any affected consumer repos. The coding session edits only the repo it runs in;
   a change needed elsewhere becomes an issue, never an edit. Once every PR for the issue is merged and you
   confirm, it deletes the prompt file and the progress file.
+- **PR split.** With two or more objectives, it asks once: one PR, one PR per objective, or a custom
+  split. The prompt then carries a PR plan (stacked branches in merge order). The coding session asks
+  again only if a PR outgrows that plan.
 - **Pairs with `impl-issue`.** An issue carrying `Verified at: <repo>@<sha>` lets `plan-flow` skip
   re-reading paths unchanged since that commit.
 - **Context.** Reads `AGENTS.md` / `CLAUDE.md` and, if present, the `.claude/dev-flow-context.md` that
