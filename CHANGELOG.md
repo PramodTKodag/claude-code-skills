@@ -43,6 +43,13 @@ minor/patch semantics are loose while it's greenfield.
   changes, phases to PRs, tier, out of scope, hard stops. No plan narration after earlier steps. The
   run-mode question moves ahead of the gate, so approving the plan starts execution with no further ask.
   Security and Tier 3 risks stay in full prose.
+- **plan-flow 0.3.0 — token cuts.** Code readers run one per repo, covering all of its targets, instead
+  of one per file, since every spawn loads a fresh base context; security-sensitive paths keep their own
+  Standard reader and every target is still read. Step 1 reuses root instructions the tool already
+  loaded, follows only the routing the issue needs, and skips on-demand references. The prompt states
+  each fact once and cites `file:line` elsewhere, aims for about 4.5k tokens without cutting any fact an
+  objective, test or security requirement needs, and its fixed rule blocks keep every rule in fewer
+  words. Security requirements, the security plan review and the separate self-check are unchanged.
 - **plan-flow 0.3.0 — progress file name.** The coding session's progress file is now
   `docs/plans/<issue>-plan-progress.md`, so it no longer shares a path with the `dev-flow` ledger
   (`docs/plans/<issue>-progress.md`).
