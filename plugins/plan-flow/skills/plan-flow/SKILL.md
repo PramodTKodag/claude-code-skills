@@ -1,6 +1,6 @@
 ---
 name: plan-flow
-description: Investigates a GitHub issue against the real code and writes a self-contained implementation prompt for a separate coding session, without implementing anything. Use when the teammate runs /plan-flow or wants an issue investigated, grilled, security-audited and cross-service-checked before a different AI session or tool implements it.
+description: Investigates a GitHub issue against the real code and writes a self-contained canonical implementation prompt plus execution slices derived from it for multi-session implementation, without implementing anything. Use when the teammate runs /plan-flow or wants an issue investigated, grilled, security-audited and cross-service-checked before a different AI session or tool implements it.
 argument-hint: "<issue-number-or-url> [--worktree] [--light] [--greenfield] [--no-prompt] [--exec-print <n|gates|ship|all>]"
 disable-model-invocation: true
 ---
@@ -15,7 +15,7 @@ Input: issue link or number, optional `--worktree` (dashes optional), optional `
 
 **Compatibility mode.** `--greenfield` → the product has no live users, consumers or stored data to preserve, so the plan carries no compatibility or migration work. Omitted → existing consumers and data are assumed, and a breaking change needs a migration or rollout path. Fix the mode now and state it in the preflight message.
 
-**Output mode.** Always save the canonical prompt and its execution slices. Default: print the teammate workflow, objective 1's slice in one fenced block, and the file paths. `--exec-print` picks the slice to print: an objective number, `gates`, `ship`, or `all`. `--no-prompt` → print the workflow and paths only.
+**Output mode.** Always save the canonical prompt and its execution slices. Default: print the teammate workflow, objective 1's slice in one fenced block, and the file paths. `--exec-print` picks the slice to print: an objective number, `gates`, `ship`, or `all`. `all` is for archiving; the handoff still tells the teammate to paste one slice per new session. `--no-prompt` → print the workflow and paths only.
 
 ## Tiers
 
@@ -111,8 +111,9 @@ Self-check before handing over, by one Standard subagent or inline when subagent
 
 And for the slices:
 - one objective slice per canonical objective, plus the gates and ship slices
-- each objective slice meets the template's carry and leave-out lists: one objective, one focused test command, no full gate suite, no push, PR or issue step
-- every canonical Security requirements line appears in the slice of each objective it touches and in the gates slice
+- each objective slice meets the template's carry and leave-out lists: one objective, one focused test command, no full gate suite, and no Run rule, push, PR or issue step: ship work sits only in the ship slice, full validation only in the gates slice
+- each objective slice stays near 1,800 tokens (about 1,350 words); when over, cut repeats and wording, never a fact
+- every canonical Security requirements line appears in the slice of each objective it touches and in the gates slice; standing invariants appear as the template's pointer, not a pasted table
 - a slice whose objective waits on an unmet external release or issue opens with a STOP line
 - the ship slice's start comment matches Decided, and its PR rows and issue keywords match the canonical PR plan
 - the canonical prompt still passes every check above on its own

@@ -7,7 +7,7 @@ last-reviewed: 2026-10-04
 
 Fill every section in order. Keep the prompt lean, since the coding session carries it in context for the whole run: delete each section, bullet and `<…>` hint that does not apply to this issue, list under Verified only the facts an objective or security requirement depends on, one line each, and state each decision in one line. State each fact once, in the section that owns it; elsewhere cite its `file:line` instead of restating it. Aim for about 4.5k tokens; when over, cut repeats and wording, never a fact an objective, test or security requirement needs. Replace each `<…>`. Write imperatively: state decisions, never options. The finished text is plain Markdown that works pasted into any coding tool.
 
-This canonical prompt is the single source of truth and must stay complete on its own. The execution slices are derived from it for multi-session implementation and never replace this file on disk.
+**Multi-session implementation.** This canonical prompt is the single source of truth and must stay complete for one long implementing session. For interactive coding sessions the teammate runs the execution slices from `execution-handoff-template.md` instead (`exec-obj-*`, `exec-gates`, `exec-ship`), one slice per new session; they never replace this file on disk. The Run rule below governs only a session that runs this whole prompt: objective slices never push, open PRs or run every objective, and that ship work belongs to `exec-ship.md`.
 
 ---
 

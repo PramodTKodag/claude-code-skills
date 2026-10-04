@@ -20,7 +20,9 @@ minor/patch semantics are loose while it's greenfield.
   issues). The teammate pastes each into a new coding session in order, so no session carries the whole
   issue or a long thread. Each objective slice keeps the facts, decisions and security requirements its
   objective touches, one focused test command and the three mandatory stops, then commits and stops.
-  The canonical prompt stays complete for tools that run the whole issue in one session.
+  The canonical prompt stays complete for tools that run the whole issue in one session, and its Run rule
+  governs only such a run. Slices copy the issue's own security requirements verbatim and cite standing
+  invariants by pointer instead of pasting their tables.
 - **plan-flow 0.3.0 — handoff output.** Every handoff prints a how-to-run block, objective 1's slice in a
   fenced block and the file paths. `--exec-print <n|gates|ship|all>` picks the slice to print;
   `--no-prompt` prints the how-to-run block and paths only.

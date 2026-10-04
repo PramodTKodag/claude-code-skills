@@ -14,7 +14,7 @@ Save beside the canonical prompt in the anchor repo's `docs/plans/`:
 - `<issue>-exec-gates.md`: validation only
 - `<issue>-exec-ship.md`: decision record, side findings, push, PRs, cross-service issues
 
-Aim for 1,200–1,800 tokens per objective slice. The gates and ship slices may run larger, but never restate the whole canonical prompt.
+Aim for 1,200–1,800 tokens per objective slice (about 1,350 words at most); when over, cut repeats and wording, never a fact. The gates and ship slices may run larger, but never restate the whole canonical prompt.
 
 ## Objective slice
 
@@ -23,7 +23,7 @@ Carry only what objective `<n>` needs:
 - **STOP line.** Only when the canonical objective carries a `waits on` mark: name the release or issue and the command that shows whether it is met.
 - **Verified.** The facts this objective needs, with the `Verified at` line of each repo they come from.
 - **Decided.** The lines this objective relies on, binding ADR or canon lines included.
-- **Security.** The canonical Security requirements lines this objective touches, verbatim, and the binding guardrails by name (`AGENTS.md` or `CLAUDE.md` section, ADR id). No full invariant tables when Decided covers them. None touched → one line saying so. A slice touching a security-sensitive path per the profile marks its title `security-sensitive`.
+- **Security.** Copy verbatim the canonical Security requirements lines this objective touches: they are issue-specific and short, and a pointer loses them. For the repo's standing invariants, prefer the binding Decided lines plus one pointer, `Binding: <AGENTS.md or CLAUDE.md section that holds them>; <ADR ids>`, over pasting their tables. None touched → one line saying so. The slice still keeps to the size target. A slice touching a security-sensitive path per the profile marks its title `security-sensitive`.
 - **Validate.** One focused command for this objective's tests, from the canonical Validation or the repo profile.
 
 Leave out: other objectives, the Progress template, the PR plan, Cross-service follow-up, the new-decisions and side-findings procedure, After merge, the Definition of done, Verified blocks of repos this objective does not touch, and the full gate suite.
@@ -57,7 +57,7 @@ Leave out: other objectives, the Progress template, the PR plan, Cross-service f
 
     ## Security
     - <requirement, verbatim from the canonical prompt>
-    Binding: <`AGENTS.md` or `CLAUDE.md` section; ADR ids>.
+    Binding: <`AGENTS.md` or `CLAUDE.md` section that holds the invariants>; <ADR ids>.
 
     ## Validate
     `<focused test command>` must pass before you commit. Never skip git hooks.
@@ -155,7 +155,8 @@ Print this block, filled, on every handoff.
     4. Paste **only** `<issue>-exec-obj-2.md`, then `<issue>-exec-obj-3.md`, … in order, each in a new session.
     5. If a slice starts with **STOP** (dependency not ready), skip it until unblocked. Gates and ship handle only PR rows whose objectives are all done.
     6. **Clear context** → paste **only** `<issue>-exec-gates.md`, **or** run its commands yourself.
-    7. **Clear context** → paste **only** `<issue>-exec-ship.md`. It posts the decision record, asks about side findings, pushes and opens the PRs linked to the issue. You merge.
+    7. **Clear context** → paste **only** `<issue>-exec-ship.md`. It posts the decision record, asks about side findings, pushes and opens the PRs linked to the issue. You merge. Opening the PRs yourself instead? Skip pasting it and copy the start comment, each row's `Closes`/`Refs` keyword and the cross-service issues from it.
     8. **Never** paste `<issue>-implementation-prompt.md` into a coding session, and do not attach it unless you are debugging a single blocker.
+    9. Every slice printed at once (`--exec-print all`) is for copying or archiving only. Still run one slice per new session; never paste several slice files into one thread.
 
     Pin a fast default model for routine slices and a stronger one for slices marked security-sensitive; avoid automatic routing to expensive models.
