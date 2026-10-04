@@ -61,11 +61,11 @@ Verified at: `<repo>@<sha>` (one line per repo read)
 **First action:** <the concrete first step, e.g. write the failing test `<name>` in `<path>`, or change `<function>` in `<file>`>
 
 ## PR plan
-<Include only when the split chose more than one PR; otherwise delete this section. One row per PR in merge order; every objective sits in exactly one row; name each branch like `<branch>`.>
+<Include only when the split chose more than one PR; otherwise delete this section. One row per PR in merge order; every objective sits in exactly one row; name each branch like `<branch>`. The last row closes the issue; every earlier row refs it.>
 
 Open one PR per row, in order, each against the base its row names. Cut each later branch from the previous PR's branch tip in the same workspace.
-1. `<branch>` → `<base branch>` — objectives <1–2>
-2. `<branch-2>` → `<branch>` — objective <3>
+1. `<branch>` → `<base branch>` — objectives <1–2> — `Refs #<issue>`
+2. `<branch-2>` → `<branch>` — objective <3> — `Closes #<issue>`
 
 ## Progress file
 <Include only with two or more objectives; otherwise delete this section. Fill the checklist from the Objectives.>
@@ -107,6 +107,7 @@ Create `docs/plans/<issue>-plan-progress.md` in your workspace with the content 
 
 ## Repository hygiene
 - Work on a branch and open a PR against `<base branch>` (with a PR plan: each PR against the base its row names). Never merge a PR, and push nothing to `<base branch>` directly.
+- Link the issue in every PR body: `Closes #<issue>` on the PR that completes it (the only PR, or the last PR plan row), `Refs #<issue>` on every other PR; write `owner/repo#<issue>` when the issue lives in another repo. A PR that leaves an acceptance criterion open uses `Refs` and names that criterion.
 - Before opening any PR, check its diff. If it outgrew a reviewably small PR (many files, several hundred lines, or mixed concerns), stop and ask me whether to split it further.
 
 ## New decisions and side findings
@@ -136,7 +137,7 @@ Delete the planning files only after every PR you opened for this issue is merge
 - Every objective met and verified against code
 - Required validation green
 - <Security-sensitive only: full-diff security review done and reported>
-- Every PR open (one per PR plan row when there is a plan), none merged
+- Every PR open (one per PR plan row when there is a plan), linked to the issue with `Closes` or `Refs`, none merged
 - Every change is inside this repo's workspace
 - Cross-service issues filed, or none needed with evidence
 - Start comment and every new decision commented on the issue; side findings resolved as I decided
