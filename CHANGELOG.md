@@ -24,7 +24,10 @@ minor/patch semantics are loose while it's greenfield.
   command, and its slice opens with a STOP line. Each objective slice reads the progress file and the
   branch log first and follows earlier decisions; each objective must be testable on its own. With
   stacked PRs, the final message says to merge in order and retarget each later PR to the base branch
-  before merging, since `Closes` fires only on a merge into the default branch.
+  before merging, since `Closes` fires only on a merge into the default branch. Slices read only the
+  cited line ranges and run tests and gates without verbose output. The workflow has you run the gate
+  commands yourself and paste the gates slice only on a failure or for a security-sensitive issue, and
+  a change too small for its own session folds into the objective it supports.
   The canonical prompt stays complete for tools that run the whole issue in one session, and its Run rule
   governs only such a run. Slices copy the issue's own security requirements verbatim and cite standing
   invariants by pointer instead of pasting their tables.

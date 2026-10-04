@@ -24,7 +24,7 @@ Carry only what objective `<n>` needs:
 - **Verified.** The facts this objective needs, with the `Verified at` line of each repo they come from.
 - **Decided.** The lines this objective relies on, binding ADR or canon lines included.
 - **Security.** Copy verbatim the canonical Security requirements lines this objective touches: they are issue-specific and short, and a pointer loses them. For the repo's standing invariants, prefer the binding Decided lines plus one pointer, `Binding: <AGENTS.md or CLAUDE.md section that holds them>; <ADR ids>`, over pasting their tables. None touched → one line saying so. The slice still keeps to the size target. A slice touching a security-sensitive path per the profile marks its title `security-sensitive`.
-- **Validate.** One focused command for this objective's tests, from the canonical Validation or the repo profile.
+- **Validate.** One focused command for this objective's tests, from the canonical Validation or the repo profile, in the runner's quiet mode (no verbose flag); never a pipe that hides the exit code.
 
 Leave out: other objectives, the Progress template, the PR plan, Cross-service follow-up, the new-decisions and side-findings procedure, After merge, the Definition of done, Verified blocks of repos this objective does not touch, and the full gate suite.
 
@@ -36,6 +36,7 @@ Leave out: other objectives, the Progress template, the PR plan, Cross-service f
 
     **Hard rule:** mention no AI tool, assistant or model in code, comments or commits (including co-author trailers), and add no "generated with" footers.
     **Scope:** edit only this workspace. Never edit another repository, checkout or objective; when this objective needs a change elsewhere, tell me and stop.
+    **Budget:** read the cited `file:line` ranges and widen a read only when you need more; run tests and builds without verbose flags, and rerun only a failing test verbosely.
 
     ## Workspace
     Path `<path>` · branch `<branch>` · base `<base branch>`
@@ -83,6 +84,7 @@ Carry the exact gate commands from the repo profile (`.agents/dev-flow-context.m
 
     **Hard rule:** mention no AI tool, assistant or model in code, comments or commits (including co-author trailers), and add no "generated with" footers.
     **Scope:** edit only this workspace; never another repository or checkout.
+    **Budget:** run each gate without verbose flags, and rerun only a failing check verbosely.
 
     ## Workspace
     Path `<path>` · base `<base branch>` · branches in merge order: `<branch>`<, `<branch-2>`>
@@ -156,7 +158,7 @@ Print this block, filled, on every handoff.
     3. **Clear context** (new session). Do not continue the old thread.
     4. For each remaining objective (none when there is only one): **new session** → paste **only** `<issue>-exec-obj-<n>.md` in order.
     5. If a slice starts with **STOP** (dependency not ready), skip it until unblocked. Gates and ship handle only PR rows whose objectives are all done.
-    6. **Clear context** → paste **only** `<issue>-exec-gates.md`, **or** run its commands yourself.
+    6. Run the gate commands listed in `<issue>-exec-gates.md` yourself; that costs no tokens. **Clear context** → paste **only** that slice when a gate fails<, or always for this issue: it is security-sensitive and the slice holds the security re-read>.
     7. **Clear context** → paste **only** `<issue>-exec-ship.md`. It posts the decision record, asks about side findings, pushes and opens the PRs linked to the issue. You merge, in PR plan order. Opening the PRs yourself instead? Skip pasting it and copy the start comment, each row's `Closes`/`Refs` keyword and the cross-service issues from it.
     8. **Never** paste `<issue>-implementation-prompt.md` into a coding session, and do not attach it unless you are debugging a single blocker.
     9. Every slice printed at once (`--exec-print all`) is for copying or archiving only. Still run one slice per new session; never paste several slice files into one thread.
