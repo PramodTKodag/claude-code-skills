@@ -147,6 +147,13 @@ Write the start comment ready to post, from the canonical Decided section. Copy 
 
     Final message: PR links, issue links, comments posted, how each finding was resolved, deviations from the plan, anything not validated.
 
+## Filling the workflow
+
+When printing the teammate workflow block, resolve every placeholder; never leave a literal `<…>` in it.
+- Step 4: replace `<issue>-exec-obj-<n>.md` with the remaining slice file names in order (e.g. `1418-exec-obj-2.md`, then `1418-exec-obj-3.md`). With one objective, make step 4 read `4. No other objectives.`
+- Step 6, **not** security-sensitive per the anchor profile: delete everything from the opening `<` through the closing `>` on that line, including the leading comma. The line ends after "when a gate fails."
+- Step 6, **security-sensitive** per the profile: replace the angle-bracket wrapper with plain text: ", or always for this issue: it is security-sensitive and the slice holds the security re-read."
+
 ## Teammate workflow
 
 Print this block, filled, on every handoff.

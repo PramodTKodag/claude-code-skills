@@ -28,6 +28,8 @@ minor/patch semantics are loose while it's greenfield.
   cited line ranges and run tests and gates without verbose output. The workflow has you run the gate
   commands yourself and paste the gates slice only on a failure or for a security-sensitive issue, and
   a change too small for its own session folds into the objective it supports.
+  The printed how-to-run block resolves every placeholder, including the security-sensitive tail of
+  the gates step, and the self-check confirms objective sizing and quiet test commands.
   The canonical prompt stays complete for tools that run the whole issue in one session, and its Run rule
   governs only such a run. Slices copy the issue's own security requirements verbatim and cite standing
   invariants by pointer instead of pasting their tables.

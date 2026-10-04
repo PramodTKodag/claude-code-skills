@@ -59,6 +59,7 @@ Verified at: `<repo>@<sha>` (one line per repo read)
 
 ## Objectives (in this order)
 1. <exact change> — files/APIs: `<confirmed paths>` <— waits on: `<owner issue or release>`; check: `<command that shows it is met>`. Only when the objective depends on an unreleased library, an open issue or another external gate; execution slices turn this into their STOP line.>
+<Each objective is one execution slice: big enough to justify its own session and focused test command; merge untestable fragments and fold sub-session edits into the objective they support.>
 
 **First action:** <the concrete first step, e.g. write the failing test `<name>` in `<path>`, or change `<function>` in `<file>`>
 

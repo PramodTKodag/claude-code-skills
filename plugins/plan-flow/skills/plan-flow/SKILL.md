@@ -118,6 +118,9 @@ And for the slices:
 - a slice whose objective waits on an unmet external release or issue opens with a STOP line
 - the ship slice's start comment matches Decided, and its PR rows and issue keywords match the canonical PR plan
 - objective slices forbid issue comments; the ship slice owns the start comment and every `Decisions:` post from the progress file
+- objectives follow the step 7 sizing: each maps to one slice session, is testable alone, and trivial edits sit folded into the objective they support
+- the printed teammate workflow has no `<…>`, and step 6's security-sensitive tail matches the profile
+- each objective slice's Validate command is quiet: no verbose flag, and no pipe that hides the exit code
 - the canonical prompt still passes every check above on its own
 
 Fix gaps. Then reply with a report of at most 25 lines: issue summary, root cause, design, security findings, edge cases, alternatives, open questions. Follow it with the handoff: the template's teammate workflow block, filled; the slice `--exec-print` names (default objective 1; `all` prints each slice) in its own fenced block; and one line listing the canonical prompt and every slice path. With `--no-prompt`, give the workflow block and the paths only. End by suggesting `/clear`.
