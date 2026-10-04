@@ -65,7 +65,7 @@ Verified at: `<repo>@<sha>` (one line per repo read)
 ## PR plan
 <Include only when the split chose more than one PR; otherwise delete this section. One row per PR in merge order; every objective sits in exactly one row; name each branch like `<branch>`. The last row closes the issue; every earlier row refs it.>
 
-Open one PR per row, in order, each against the base its row names. Cut each later branch from the previous PR's branch tip in the same workspace.
+Open one PR per row, in order, each against the base its row names. Cut each later branch from the previous PR's branch tip in the same workspace. With more than one row, tell me in your final message to merge in row order and to check, before merging each later PR, that it now targets `<base branch>`: GitHub retargets it only when the branch below is deleted on merge, and `Closes` fires only on a merge into the default branch.
 1. `<branch>` → `<base branch>` — objectives <1–2> — `Refs #<issue>`
 2. `<branch-2>` → `<branch>` — objective <3> — `Closes #<issue>`
 

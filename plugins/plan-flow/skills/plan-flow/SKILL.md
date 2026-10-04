@@ -82,7 +82,7 @@ Batch every question whose prerequisites are settled, each with a recommended an
 
 ## 7. Decide
 
-Settle current behavior, root cause, target design, and concrete changes (files and APIs confirmed in code). Compare alternatives on security, correctness, maintainability, complexity; recommend one. Tests follow the repo's own convention; TDD only where the repo uses it.
+Settle current behavior, root cause, target design, and concrete changes (files and APIs confirmed in code). Compare alternatives on security, correctness, maintainability, complexity; recommend one. Tests follow the repo's own convention; TDD only where the repo uses it. Make each objective testable on its own: each becomes one coding session, so changes that cannot be tested apart form one objective.
 
 **PR split.** One objective → one PR, no ask. Two or more → ask once, recommended first by coupling and size: one PR (objectives tightly coupled or small together), one PR per objective (each stands alone), or a custom split. Record the answer under "Decided"; with more than one PR, the prompt carries it as the PR plan.
 

@@ -41,6 +41,7 @@ Leave out: other objectives, the Progress template, the PR plan, Cross-service f
     Path `<path>` · branch `<branch>` · base `<base branch>`
     1. `git fetch`, then `<create or switch command>`. Leave unrelated changes untouched.
     2. `git diff <sha> origin/<base branch> -- <paths this objective reads or edits>`. Trust Verified facts in unchanged paths; re-read changed paths and every security-control fact.
+    3. Read `docs/plans/<issue>-plan-progress.md` if it exists and run `git log --oneline origin/<base branch>..HEAD`. Follow every decision logged there; if one conflicts with this slice, stop and tell me.
     <Worktree mode: do every edit, commit and test run in `<path>`; leave the main checkout untouched.>
 
     ## Objective
@@ -133,6 +134,7 @@ Write the start comment ready to post, from the canonical Decided section. Copy 
     Per row, in merge order: check `git diff --stat origin/<row base>...<branch>`; if it outgrew a reviewably small PR (many files, several hundred lines, mixed concerns), ask me whether to split it. Then `git push -u origin <branch>` and open the PR against the row's base, with the row's keyword in the body:
     1. `<branch>` → `<base branch>` — objectives <1–2> — `Refs #<issue>`
     2. `<branch-2>` → `<branch>` — objective <3> — `Closes #<issue>`
+    With more than one row, tell me in your final message to merge in row order and to check, before merging each later PR, that it now targets `<base branch>`: GitHub retargets it only when the branch below is deleted on merge, and `Closes` fires only on a merge into the default branch.
     Write `owner/repo#<issue>` when the issue lives in another repo. A PR that leaves an acceptance criterion open uses `Refs` and names that criterion. Never merge a PR, and push nothing to `<base branch>` directly.
 
     ## Cross-service follow-up
@@ -155,7 +157,7 @@ Print this block, filled, on every handoff.
     4. Paste **only** `<issue>-exec-obj-2.md`, then `<issue>-exec-obj-3.md`, … in order, each in a new session.
     5. If a slice starts with **STOP** (dependency not ready), skip it until unblocked. Gates and ship handle only PR rows whose objectives are all done.
     6. **Clear context** → paste **only** `<issue>-exec-gates.md`, **or** run its commands yourself.
-    7. **Clear context** → paste **only** `<issue>-exec-ship.md`. It posts the decision record, asks about side findings, pushes and opens the PRs linked to the issue. You merge. Opening the PRs yourself instead? Skip pasting it and copy the start comment, each row's `Closes`/`Refs` keyword and the cross-service issues from it.
+    7. **Clear context** → paste **only** `<issue>-exec-ship.md`. It posts the decision record, asks about side findings, pushes and opens the PRs linked to the issue. You merge, in PR plan order. Opening the PRs yourself instead? Skip pasting it and copy the start comment, each row's `Closes`/`Refs` keyword and the cross-service issues from it.
     8. **Never** paste `<issue>-implementation-prompt.md` into a coding session, and do not attach it unless you are debugging a single blocker.
     9. Every slice printed at once (`--exec-print all`) is for copying or archiving only. Still run one slice per new session; never paste several slice files into one thread.
 

@@ -21,7 +21,10 @@ minor/patch semantics are loose while it's greenfield.
   issue or a long thread. Each objective slice keeps the facts, decisions and security requirements its
   objective touches, one focused test command and the three mandatory stops, then commits and stops.
   A canonical objective blocked on an external release or issue carries `waits on:` with a check
-  command, and its slice opens with a STOP line.
+  command, and its slice opens with a STOP line. Each objective slice reads the progress file and the
+  branch log first and follows earlier decisions; each objective must be testable on its own. With
+  stacked PRs, the final message says to merge in order and retarget each later PR to the base branch
+  before merging, since `Closes` fires only on a merge into the default branch.
   The canonical prompt stays complete for tools that run the whole issue in one session, and its Run rule
   governs only such a run. Slices copy the issue's own security requirements verbatim and cite standing
   invariants by pointer instead of pasting their tables.
