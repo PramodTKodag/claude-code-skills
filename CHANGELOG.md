@@ -43,6 +43,10 @@ minor/patch semantics are loose while it's greenfield.
   changes, phases to PRs, tier, out of scope, hard stops. No plan narration after earlier steps. The
   run-mode question moves ahead of the gate, so approving the plan starts execution with no further ask.
   Security and Tier 3 risks stay in full prose.
+- **plan-flow 0.3.0 — issue-linked PRs.** Every PR the coding session opens links the issue: `Closes`
+  on the PR that completes it (the only PR, or the last PR plan row), `Refs` on every other PR, and
+  `Refs` plus the open criterion when a PR leaves an acceptance criterion unmet. PR plan rows carry the
+  keyword, and the self-check and Definition of done confirm it.
 - **plan-flow 0.3.0 — run rule.** The prompt tells the coding session to carry the work through to the
   Definition of done in one run: commit each objective, push, open each PR in order and start the next
   objective without asking or stopping to report progress. It pauses only for a Quick check stop, a
