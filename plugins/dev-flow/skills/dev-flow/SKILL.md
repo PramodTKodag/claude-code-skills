@@ -317,9 +317,15 @@ written before any edit (and on Opus with the `opusplan` model setting). Write e
 plan file — the plan summary first, then the phases. Do not call `ExitPlanMode` until the end of Step 4.
 
 1. Run **`/grill-me`** on the findings until the decision tree is resolved.
-2. Draft the **plan summary** as the top of the plan file — **caveman, about 6 lines max**: what changes, why,
-   phases → PRs, run mode + execution skill, risk tier, what's out of scope, any hard-stop item. **A security
-   or Tier 3 risk stays in full plain prose** — never compress it to save words.
+2. Draft the **plan summary** as the top of the plan file — **caveman, few words, one line each**:
+   - **Fixing** — what is broken or missing.
+   - **Win** — how the fix helps users and the team.
+   - **If skipped** — the pain users and the team keep if we don't fix it.
+   - **Change** — what the code will do differently.
+   - **PRs** — phases → PRs, run mode + execution skill.
+   - **Tier · Out of scope · Hard stops.**
+
+   **A security or Tier 3 risk stays in full plain prose** — never compress it to save words.
 3. **Tier 3 only:** run `plan-review` ([Second model](references/dev-flow-reference.md) › table) on the draft;
    triage findings before moving on.
 
@@ -335,9 +341,10 @@ caveman, `AskUserQuestion`, recommended pick marked: (a) bundle the phases into 
 tightly coupled)*, (b) one PR per phase, or (c) a custom split. Record the result in the ledger (`PRs:` line —
 which phases map to which PR) so a warm resume keeps it without re-asking. Ask the **run mode** (Step 5
 execution gate) now too — in the same `AskUserQuestion` call as the PR split when there is one — so nothing is
-left to ask after approval. Then **print the plan summary in chat** and **call `ExitPlanMode` once, here, at the
-end of Step 4 — that approval is the single plan gate and the go signal:** on approval, start Step 5's first
-task with no further ask; on edits, revise and re-gate. Execution continues outside plan mode (on
+left to ask after approval. **Explain the plan once, here:** no plan narration after earlier steps — print the
+plan summary in chat right before the approval prompt, then **call `ExitPlanMode` once, at the end of Step 4,
+and wait — that approval is the single plan gate and the go signal:** on approval, start Step 5's first task
+with no further ask; on edits, revise and re-gate. Execution continues outside plan mode (on
 Sonnet with `opusplan`). **After approval, create the ledger:** `mkdir -p docs/plans/` in the anchor, write the
 plan into `docs/plans/<issue>-progress.md` from the reference template, then add the
 `project_<svc>_<issue>_in_progress` memory pointer.

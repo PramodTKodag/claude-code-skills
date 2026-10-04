@@ -34,10 +34,11 @@ minor/patch semantics are loose while it's greenfield.
   comments.
 
 ### Changed
-- **dev-flow 0.3.0 — plan gate.** The plan gate shows a caveman plan summary (about 6 lines: what, why, phases to PRs, run
-  mode, risk tier, out of scope, hard stops) in chat before `ExitPlanMode`. The run-mode question moves
-  ahead of the gate, so approving the plan starts execution with no further ask. Security and Tier 3
-  risks stay in full prose.
+- **dev-flow 0.3.0 — plan gate.** The plan is explained once, as a caveman summary printed in chat right
+  before `ExitPlanMode`: what we fix, how it helps users and the team, what pain stays if skipped, what
+  changes, phases to PRs, tier, out of scope, hard stops. No plan narration after earlier steps. The
+  run-mode question moves ahead of the gate, so approving the plan starts execution with no further ask.
+  Security and Tier 3 risks stay in full prose.
 - **plan-flow 0.3.0 — progress file name.** The coding session's progress file is now
   `docs/plans/<issue>-plan-progress.md`, so it no longer shares a path with the `dev-flow` ledger
   (`docs/plans/<issue>-progress.md`).
