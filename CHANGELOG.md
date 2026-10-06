@@ -84,6 +84,10 @@ minor/patch semantics are loose while it's greenfield.
   `docs/plans/<issue>-plan-progress.md`, so it no longer shares a path with the `dev-flow` ledger
   (`docs/plans/<issue>-progress.md`).
 
+### Security
+- **CI hardening.** The validate workflow pins `actions/checkout` to a commit SHA and runs with read-only
+  repository permissions; Dependabot keeps the pinned GitHub Actions current.
+
 ## [0.4.0] - 2026-10-03
 
 ### Changed
