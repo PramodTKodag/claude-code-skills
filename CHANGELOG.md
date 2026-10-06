@@ -87,6 +87,9 @@ minor/patch semantics are loose while it's greenfield.
 ### Security
 - **CI hardening.** The validate workflow pins `actions/checkout` to a commit SHA and runs with read-only
   repository permissions; Dependabot keeps the pinned GitHub Actions current.
+- **Per-plugin license and security policy.** Each plugin folder ships its own `LICENSE` and a short
+  `SECURITY.md` that points to the private reporting channel, since an installed plugin contains only its
+  own folder.
 
 ## [0.4.0] - 2026-10-03
 
