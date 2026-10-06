@@ -90,6 +90,8 @@ minor/patch semantics are loose while it's greenfield.
 - **Per-plugin license and security policy.** Each plugin folder ships its own `LICENSE` and a short
   `SECURITY.md` that points to the private reporting channel, since an installed plugin contains only its
   own folder.
+- **Plugin scanner CI.** Every PR and every push to `main` runs the HOL plugin scanner with read-only
+  permissions and no secrets; it fails below a score of 80 or on any high or critical finding.
 
 ## [0.4.0] - 2026-10-03
 
