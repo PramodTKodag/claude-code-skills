@@ -6,6 +6,8 @@ minor/patch semantics are loose while it's greenfield.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-10-08
+
 ### Added
 - **plan-flow 0.3.0 — PR split.** With two or more objectives the planner asks once: one PR, one PR per
   objective, or a custom split, and records it under Decided. More than one PR adds a PR plan to the
@@ -89,7 +91,7 @@ minor/patch semantics are loose while it's greenfield.
   repository permissions; Dependabot keeps the pinned GitHub Actions current.
 - **Per-plugin license and security policy.** Each plugin folder ships its own `LICENSE` and a short
   `SECURITY.md` that points to the private reporting channel, since an installed plugin contains only its
-  own folder.
+  own folder. dependency-audit moves to 0.1.1 so installed copies pick the files up.
 - **Plugin scanner CI.** Every PR and every push to `main` runs the HOL plugin scanner with read-only
   permissions and no secrets; it fails below a score of 80 or on any high or critical finding.
 
@@ -162,7 +164,8 @@ First public release of the `claude-code-skills` marketplace.
 - `dev-flow-executor` and `dev-flow-explorer` agents bundled with the plugin.
 - CONTRIBUTING notes, issue/PR templates, and a manual-install path in the README.
 
-[Unreleased]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.1.0...v0.2.0
