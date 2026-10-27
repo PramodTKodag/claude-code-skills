@@ -1,0 +1,78 @@
+{
+  "issue": "https://github.com/example/service/issues/52",
+  "base": "dev@0123abcdef",
+  "compatibility": "greenfield",
+  "execution_root": "/work/service",
+  "setup": "Current checkout; create the PR branch from origin/dev per repo policy",
+  "security": {
+    "sensitive": false
+  },
+  "gates": {
+    "commands": [
+      "make validate"
+    ],
+    "conditional": [
+      {
+        "when": "HTTP, DTO or logging code changed",
+        "command": "make scan-secrets"
+      }
+    ]
+  },
+  "follow_up": "No consumer of the changed contract found; coverage limited to this repository.",
+  "rollback": "Revert the PR; no data or deployed state is touched.",
+  "title": "Adopt the provider v2 response shape",
+  "layout": "compact",
+  "layout_reason": "one decoder and its fixtures; fits a single session once the provider ships v2",
+  "root_cause": "decoder reads the v1 field names",
+  "target_behavior": "decoder reads v2 field names",
+  "acceptance": [
+    {
+      "id": "AC1",
+      "text": "v2 responses decode with exact amounts",
+      "objectives": [
+        1
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "at": "src/portfolio/activity_decoder.py:27",
+      "claim": "hard-codes v1 keys"
+    }
+  ],
+  "decisions": [
+    {
+      "text": "Support v2 only",
+      "why": "greenfield; no v1 consumers",
+      "rejected": "dual decoding"
+    }
+  ],
+  "objectives": [
+    {
+      "title": "Decode v2",
+      "files": [
+        "src/portfolio/activity_decoder.py"
+      ],
+      "tests": [
+        "ActivityDecoderTests.testDecodesV2"
+      ],
+      "action": "Add a v2 fixture test, then update the decoder",
+      "validate": "make test-filter FILTER=ActivityDecoderTests",
+      "wait": {
+        "on": "provider v2 deployed to dev",
+        "check": "curl -fsS https://dev.example.invalid/v2/health",
+        "resume": "exit 0 and a JSON body with status ok"
+      }
+    }
+  ],
+  "pr_rows": [
+    {
+      "branch": "feat/provider-v2",
+      "base": "dev",
+      "objectives": [
+        1
+      ],
+      "keyword": "Closes"
+    }
+  ]
+}

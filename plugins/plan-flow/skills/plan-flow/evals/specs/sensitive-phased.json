@@ -1,0 +1,122 @@
+{
+  "issue": "https://github.com/example/service/issues/41",
+  "base": "dev@0123abcdef",
+  "compatibility": "greenfield",
+  "execution_root": "/work/service",
+  "setup": "Current checkout; create the PR branch from origin/dev per repo policy",
+  "security": {
+    "sensitive": true,
+    "binding": "AGENTS.md Domain Invariants and Security Standards",
+    "review": "fresh-context reviewer, scope: spec and cited source, no findings open after P0/P1 resolution",
+    "controls": [
+      {
+        "id": "S1",
+        "text": "Session loads fail closed when user presence cannot be proven",
+        "objectives": [
+          1
+        ]
+      },
+      {
+        "id": "S2",
+        "text": "No session secret is logged or kept after use; zero memory",
+        "objectives": [
+          1,
+          2
+        ]
+      }
+    ]
+  },
+  "gates": {
+    "commands": [
+      "make validate",
+      "make scan-secrets"
+    ],
+    "conditional": [
+      {
+        "when": "signing code changed",
+        "command": "make test-e2e"
+      }
+    ]
+  },
+  "follow_up": "No consumer of the changed contract found; coverage limited to this repository.",
+  "rollback": "Revert the PR; no data or deployed state is touched.",
+  "title": "Require presence before session use",
+  "layout": "phased",
+  "layout_reason": "two security-critical flows with distinct failure matrices",
+  "root_cause": "loadSession proceeds when the authentication context is missing",
+  "target_behavior": "loadSession and signing both fail closed without proven presence",
+  "acceptance": [
+    {
+      "id": "AC1",
+      "text": "Session load refuses without presence",
+      "objectives": [
+        1
+      ]
+    },
+    {
+      "id": "AC2",
+      "text": "Signing refuses without presence",
+      "objectives": [
+        2
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "at": "src/session/session_loader.py:61",
+      "claim": "treats nil context as allowed",
+      "objectives": [
+        1
+      ]
+    },
+    {
+      "at": "src/signing/signer.py:90",
+      "claim": "loads session without presence check",
+      "objectives": [
+        2
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "text": "Fail closed at the loader boundary",
+      "why": "one choke point",
+      "rejected": "check in each caller"
+    }
+  ],
+  "objectives": [
+    {
+      "title": "Loader fails closed",
+      "files": [
+        "src/session/session_loader.py"
+      ],
+      "tests": [
+        "SessionLoaderTests.test_refuses_without_presence"
+      ],
+      "action": "Write the failing test, then add the presence guard",
+      "validate": "make test-filter FILTER=SessionLoaderTests"
+    },
+    {
+      "title": "Signer fails closed",
+      "files": [
+        "src/signing/signer.py"
+      ],
+      "tests": [
+        "SignerTests.test_refuses_without_presence"
+      ],
+      "action": "Write the failing test, then route through the guarded loader",
+      "validate": "make test-filter FILTER=SignerTests"
+    }
+  ],
+  "pr_rows": [
+    {
+      "branch": "fix/presence-guard",
+      "base": "dev",
+      "objectives": [
+        1,
+        2
+      ],
+      "keyword": "Closes"
+    }
+  ]
+}

@@ -1,0 +1,139 @@
+{
+  "issue": "https://github.com/example/service/issues/63",
+  "base": "dev@0123abcdef",
+  "compatibility": "greenfield",
+  "execution_root": "/work/service",
+  "setup": "Current checkout; create the PR branch from origin/dev per repo policy",
+  "security": {
+    "sensitive": false
+  },
+  "gates": {
+    "commands": [
+      "make validate"
+    ],
+    "conditional": [
+      {
+        "when": "HTTP, DTO or logging code changed",
+        "command": "make scan-secrets"
+      }
+    ]
+  },
+  "follow_up": "No consumer of the changed contract found; coverage limited to this repository.",
+  "rollback": "Revert the PR; no data or deployed state is touched.",
+  "title": "Split pricing and display fixes",
+  "layout": "phased",
+  "layout_reason": "two independent behaviors reviewed separately; the second builds on the first",
+  "root_cause": "rounding happens twice, once in pricing and again in display",
+  "target_behavior": "rounding happens once, in pricing",
+  "acceptance": [
+    {
+      "id": "AC1",
+      "text": "Pricing rounds once",
+      "objectives": [
+        1
+      ]
+    },
+    {
+      "id": "AC2",
+      "text": "Display never rounds",
+      "objectives": [
+        2
+      ]
+    },
+    {
+      "id": "AC3",
+      "text": "Totals match end to end",
+      "objectives": [
+        3
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "at": "src/pricing/round.py:14",
+      "claim": "rounds to 2 places",
+      "objectives": [
+        1
+      ]
+    },
+    {
+      "at": "src/display/format.py:33",
+      "claim": "rounds again",
+      "objectives": [
+        2
+      ]
+    },
+    {
+      "at": "tests/e2e/test_totals.py:12",
+      "claim": "covers a single flow only",
+      "objectives": [
+        3
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "text": "Pricing owns rounding",
+      "why": "single source of truth",
+      "rejected": "display owns rounding"
+    }
+  ],
+  "objectives": [
+    {
+      "title": "Pricing rounds once",
+      "files": [
+        "src/pricing/round.py"
+      ],
+      "tests": [
+        "RoundTests.testRoundsOnce"
+      ],
+      "action": "Write the failing test, then fix pricing",
+      "validate": "make test-filter FILTER=RoundTests"
+    },
+    {
+      "title": "Display stops rounding",
+      "files": [
+        "src/display/format.py"
+      ],
+      "tests": [
+        "FormatTests.testNeverRounds"
+      ],
+      "action": "Write the failing test, then fix display",
+      "validate": "make test-filter FILTER=FormatTests"
+    },
+    {
+      "title": "End-to-end totals",
+      "files": [
+        "tests/e2e/test_totals.py"
+      ],
+      "tests": [
+        "TotalsTests.testTotalsMatch"
+      ],
+      "action": "Add the end-to-end test",
+      "validate": "make test-filter FILTER=TotalsTests",
+      "prerequisites": [
+        1,
+        2
+      ]
+    }
+  ],
+  "pr_rows": [
+    {
+      "branch": "fix/rounding-core",
+      "base": "dev",
+      "objectives": [
+        1,
+        2
+      ],
+      "keyword": "Refs"
+    },
+    {
+      "branch": "test/rounding-e2e",
+      "base": "fix/rounding-core",
+      "objectives": [
+        3
+      ],
+      "keyword": "Closes"
+    }
+  ]
+}

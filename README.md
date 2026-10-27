@@ -18,7 +18,7 @@ self-contained.
 | ------ | ------------ |
 | [`dev-flow`](plugins/dev-flow) | Drive one large, multi-phase or multi-PR change end to end — plan → execute task-by-task with a live ledger → ship per PR → resume cleanly across sessions. |
 | [`dependency-audit`](plugins/dependency-audit) | Read-only audit of dependencies for known vulnerabilities (CVEs) and outdated packages across npm/pnpm/yarn, Go, Python, and Cargo → prioritized remediation report. |
-| [`plan-flow`](plugins/plan-flow) | Everything before implementation — investigate a GitHub issue against the real code, trace cross-repo consumers, audit security, grill open decisions → one self-contained prompt for a separate coding session in any AI tool. |
+| [`plan-flow`](plugins/plan-flow) | Everything before implementation — investigate a GitHub issue against the real code, trace cross-repo consumers, audit security, grill open decisions → validated, self-contained handoff files for separate coding sessions in any AI tool. |
 
 More will be added over time.
 
@@ -111,43 +111,45 @@ its `/brainstorming`, `/writing-plans`, `/executing-plans`, and TDD skills slot 
 ## Using `plan-flow`
 
 `plan-flow` does everything *before* implementation. Give it a GitHub issue and it reads the real
-code, traces cross-repo consumers, audits security, challenges the design, grills you on open
-decisions, and writes one self-contained prompt that a separate coding session (any AI tool)
-executes. It never edits product code.
+code, traces cross-repo consumers, audits security, checks the repo's recorded decisions, grills you
+on open choices, and writes validated handoff files that separate coding sessions (any AI tool)
+execute. It never edits product code, and needs `python3` for its bundled scripts.
 
 ```text
 /plan-flow 123                 # plan issue 123 in the current repo
-/plan-flow 123 --worktree      # the prompt directs the coding session into a git worktree
+/plan-flow 123 --worktree      # the handoff directs the coding session into a git worktree
 /plan-flow 123 --light         # small issue: run the whole session on a mid-tier model
 /plan-flow 123 --greenfield    # no live users or data: plan without compatibility work
-/plan-flow 123 --no-prompt     # save the files; print only the how-to-run block and paths
-/plan-flow 123 --exec-print all  # print every execution slice, not just objective 1's
+/plan-flow 123 --exec-print all  # print every handoff file body (default: outcome and paths)
 ```
 
-- **Presets.** `Full` (default) plans on a deep-reasoning model, optionally with cheap subagents for
-  reads and research. `--light` runs the whole session on a mid-tier model and escalates (asks you to
-  switch) if it finds a security-sensitive path, a contract another repo consumes, or an architecture
-  decision.
+- **Boundary.** Planning only. It writes the handoff files (never staged) and, after you approve,
+  one `Planning decisions` comment on the issue. "Yes, go ahead" at the plan check means save, not
+  implement; it then stops. A weakened security control or missing access is a stop, not a workaround.
+- **Flow.** A read-only preflight script, anchor repo, investigation, a decision lookup, sizing, an
+  always-asked plan check, then one JSON spec rendered into the files and validated in memory;
+  files are written only if valid. Early exits (already fixed, cannot reproduce, needs information,
+  wrong repo, duplicate) write nothing, and a plan with no available security reviewer is marked blocked.
+- **Output.** Compact work gets `<issue>-exec.md`; phased work gets `<issue>-exec-obj-<n>.md` per
+  objective, `<issue>-exec-gates.md` and `<issue>-exec-ship.md`, all in `docs/plans/` (or the directory
+  you approve). Paste each into a new coding session in order. The renderer adds fixed executor rules,
+  so every file states its own scope, freshness check, stops and security controls. Gate evidence must
+  match the branch tip, and the executor posts any unplanned choice as an `Execution decision:` comment.
+- **Decisions.** Reads your ADR registers at a pinned ref, fetched first: the `## Decisions` section of
+  `.agents/dev-flow-context.md` or `.claude/dev-flow-context.md` (backticked `path[@ref]` bullets, in
+  binding order), else `docs/decisions`, `docs/adr`, `adr` and similar. Accepted binds, Proposed asks,
+  Superseded points to its replacement, and coverage gaps are stated, never read as "none found".
 - **Compatibility.** The default assumes existing consumers and data, so breaking changes get a
-  migration or rollout path. `--greenfield` drops that work.
-- **Output.** The canonical prompt `docs/plans/<issue>-implementation-prompt.md` plus execution slices beside it, all
-  never staged: one `<issue>-exec-obj-<n>.md` per objective, `<issue>-exec-gates.md` and `<issue>-exec-ship.md`. It prints
-  a how-to-run block and objective 1's slice. Paste each slice into a new coding session in order, so no session
-  carries the whole issue or a long thread; the ship slice posts the decision record, pushes, and opens the PRs
-  linked to the issue. The canonical prompt stays the full handoff for a tool that runs the whole issue in one session.
-  The canonical prompt pins the commit its facts were verified at, tells the coding session to implement
-  immediately, keep a slim progress file, post one start comment with the settled decisions and a comment
-  for each new one on the issue, hold side findings for one batched question, review its own diff for security before the PR (on security-sensitive
-  issues), and, after validation, file detailed issues in any affected consumer repos. The coding session edits only the repo it runs in;
-  a change needed elsewhere becomes an issue, never an edit. Once every PR for the issue is merged and you
-  confirm, it deletes the planning files.
-- **PR split.** With two or more objectives, it asks once: one PR, one PR per objective, or a custom
-  split. The prompt then carries a PR plan (stacked branches in merge order). The coding session asks
-  again only if a PR outgrows that plan.
+  migration or rollout path. `--greenfield` drops that work but never overrides an accepted decision,
+  weakens a control or redeploys immutable state.
+- **Presets.** `Full` (default) plans on a deep-reasoning model; `--light` runs on a mid-tier one and
+  stops to ask if it finds a sensitive path, a consumed contract or an architecture decision.
+- **PR split.** With two or more objectives it asks once: one PR, one PR per objective, or a custom
+  split. Stacked PRs merge in order; `Closes` fires only for PRs merged into the default branch.
 - **Pairs with `impl-issue`.** An issue carrying `Verified at: <repo>@<sha>` lets `plan-flow` skip
   re-reading paths unchanged since that commit.
-- **Context.** Reads `AGENTS.md` / `CLAUDE.md` and, if present, the `.claude/dev-flow-context.md` that
-  `dev-flow` writes; otherwise it infers the base branch and test commands and asks you to confirm.
+- **Context.** Reads `AGENTS.md` / `CLAUDE.md` and, if present, the `dev-flow` profile; otherwise it
+  infers the base branch and test commands and asks you to confirm.
 
 `plan-flow` follows the open Agent Skills layout, so for other tools copy the skill folder where the
 tool looks for skills — Codex and Cursor read `~/.agents/skills/`:

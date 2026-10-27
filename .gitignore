@@ -6,6 +6,10 @@ Thumbs.db
 .idea/
 .vscode/
 
+# Python bytecode
+__pycache__/
+*.pyc
+
 # Local Claude Code runtime state (never publish)
 **/.claude/settings.local.json
 **/.claude/scheduled_tasks.lock

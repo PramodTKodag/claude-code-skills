@@ -1,0 +1,81 @@
+{
+  "issue": "https://github.com/example/service/issues/17",
+  "base": "dev@0123abcdef",
+  "compatibility": "greenfield",
+  "execution_root": "/work/service",
+  "setup": "Current checkout; create the PR branch from origin/dev per repo policy",
+  "security": {
+    "sensitive": false
+  },
+  "gates": {
+    "commands": [
+      "make validate"
+    ],
+    "conditional": [
+      {
+        "when": "HTTP, DTO or logging code changed",
+        "command": "make scan-secrets"
+      }
+    ]
+  },
+  "follow_up": "No consumer of the changed contract found; coverage limited to this repository.",
+  "rollback": "Revert the PR; no data or deployed state is touched.",
+  "title": "Reject invalid identifiers before lookup",
+  "layout": "compact",
+  "layout_reason": "one parser function and one regression path; fits a single focused session",
+  "root_cause": "parseId coerces malformed input to 0 and continues to the store lookup",
+  "target_behavior": "parseId throws invalidIdentifier before any lookup",
+  "acceptance": [
+    {
+      "id": "AC1",
+      "text": "Malformed identifiers are rejected before lookup",
+      "objectives": [
+        1
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "at": "src/parse.py:12",
+      "claim": "coerces non-numeric input to 0"
+    },
+    {
+      "at": "tests/test_parse.py:30",
+      "claim": "no test covers malformed input"
+    }
+  ],
+  "assumptions": [
+    "No caller relies on the zero identifier"
+  ],
+  "decisions": [
+    {
+      "text": "Throw instead of coercing",
+      "why": "silent coercion hides caller bugs",
+      "rejected": "return nil"
+    }
+  ],
+  "objectives": [
+    {
+      "title": "Reject malformed identifiers",
+      "files": [
+        "src/parse.py",
+        "tests/test_parse.py"
+      ],
+      "tests": [
+        "ParseTests.testMalformedIdentifierThrows"
+      ],
+      "action": "Add the failing regression test, then change parseId",
+      "validate": "make test-filter FILTER=ParseTests"
+    }
+  ],
+  "pr_rows": [
+    {
+      "branch": "fix/parse-id",
+      "base": "dev",
+      "objectives": [
+        1
+      ],
+      "keyword": "Closes"
+    }
+  ]
+}
