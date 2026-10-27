@@ -6,43 +6,45 @@ minor/patch semantics are loose while it's greenfield.
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-27
+
 ### Changed
-- **plan-flow — spec-rendered handoffs (breaking).** The skill no longer writes a hand-authored canonical
+- **plan-flow 0.4.0 — spec-rendered handoffs (breaking).** The skill no longer writes a hand-authored canonical
   prompt (`<issue>-implementation-prompt.md`) plus derived slices. The planner now pipes one JSON spec to
   a bundled renderer, which routes each fact to the files that need it, adds fixed executor rules,
   validates the result in memory and writes only if valid. Layouts: compact (`<issue>-exec.md`) or
   phased (`<issue>-exec-obj-<n>.md`, `-gates`, `-ship`). The prompt and execution-handoff templates are
   removed; a leftover canonical prompt for the same issue is reported as a conflict and never deleted.
-- **plan-flow — `--no-prompt` removed.** The default output is already the outcome, workflow and paths;
+- **plan-flow 0.4.0 — `--no-prompt` removed.** The default output is already the outcome, workflow and paths;
   `--exec-print <n|gates|ship|all>` prints file bodies.
-- **plan-flow — the planner now makes one approved issue write.** After an explicit answer at the plan
+- **plan-flow 0.4.0 — the planner now makes one approved issue write.** After an explicit answer at the plan
   check, it posts the settled decisions as one `Planning decisions` comment (a late decision gets one
   follow-up comment, never a repost). The start comment moves out of the ship file. Plan mode is no
   longer required; an explicit Boundary section keeps the run to planning.
 
 ### Added
-- **plan-flow — preflight script.** One read-only call reports repo role (standalone, parent checkout,
+- **plan-flow 0.4.0 — preflight script.** One read-only call reports repo role (standalone, parent checkout,
   submodule), branch and remote base branches, the dirty-path snapshot, uninitialized submodules, the
   `AGENTS.md` / `CLAUDE.md` chain, the dev-flow profile, whether `docs/plans` is git-ignored, and `gh`
   auth. It takes no arguments, so no issue text reaches a shell.
-- **plan-flow — decision lookup.** Reads ADR registers fetched first and at a pinned ref, from a
+- **plan-flow 0.4.0 — decision lookup.** Reads ADR registers fetched first and at a pinned ref, from a
   `## Decisions` section in the dev-flow profile, `--register PATH[@REF]`, or auto-detected
   directories. Reports Accepted, Proposed, Deprecated, Rejected and Superseded records (following a
   supersession to its replacement), README mismatches and explicit coverage limits. Earlier registers
   bind before later ones.
-- **plan-flow — validated handoffs.** Acceptance criteria (`AC<n>`) and security controls (`S<n>`) map
+- **plan-flow 0.4.0 — validated handoffs.** Acceptance criteria (`AC<n>`) and security controls (`S<n>`) map
   to objectives and are copied verbatim; external waits open the file with a STOP and an exact check;
   every command is wrapped as `set -o pipefail; cmd 2>&1 | tail -n 60`; each PR row names its base,
   with exactly one `Closes`; soft per-file token budgets warn instead of dropping facts.
-- **plan-flow — execution safety.** Executors check gate evidence against each branch tip, a clean
+- **plan-flow 0.4.0 — execution safety.** Executors check gate evidence against each branch tip, a clean
   tree and tool versions before publishing, post an `Execution decision:` comment at once for any
   unplanned choice, and clean up only after every PR is independently verified merged.
-- **plan-flow — security and early exits.** Sensitive plans need a fresh-context review with P0/P1
+- **plan-flow 0.4.0 — security and early exits.** Sensitive plans need a fresh-context review with P0/P1
   resolved, or are marked blocked. Already fixed, cannot reproduce, needs information, wrong repo and
   duplicate issues stop before the plan check and write nothing ready.
-- **plan-flow — greenfield limits.** `--greenfield` never overrides an accepted decision, weakens a
+- **plan-flow 0.4.0 — greenfield limits.** `--greenfield` never overrides an accepted decision, weakens a
   control or redeploys immutable state.
-- **plan-flow — tests and evals.** Unit tests for the scripts, a portability test (no host-only
+- **plan-flow 0.4.0 — tests and evals.** Unit tests for the scripts, a portability test (no host-only
   constructs in the skill text), sample specs and a manual behavior-eval table.
 
 ## [0.5.0] - 2026-10-08
@@ -203,7 +205,8 @@ First public release of the `claude-code-skills` marketplace.
 - `dev-flow-executor` and `dev-flow-explorer` agents bundled with the plugin.
 - CONTRIBUTING notes, issue/PR templates, and a manual-install path in the README.
 
-[Unreleased]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.2.0...v0.3.0
