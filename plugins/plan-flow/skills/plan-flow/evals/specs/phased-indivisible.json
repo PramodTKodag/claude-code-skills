@@ -1,0 +1,86 @@
+{
+  "issue": "https://github.com/example/service/issues/33",
+  "base": "dev@0123abcdef",
+  "compatibility": "greenfield",
+  "execution_root": "/work/service",
+  "setup": "Current checkout; create the PR branch from origin/dev per repo policy",
+  "security": {
+    "sensitive": false
+  },
+  "gates": {
+    "commands": [
+      "make validate"
+    ],
+    "conditional": [
+      {
+        "when": "HTTP, DTO or logging code changed",
+        "command": "make scan-secrets"
+      }
+    ]
+  },
+  "follow_up": "No consumer of the changed contract found; coverage limited to this repository.",
+  "rollback": "Revert the PR; no data or deployed state is touched.",
+  "title": "Replace the nonce allocator",
+  "layout": "phased",
+  "layout_reason": "one coupled allocator rewrite touching many call sites; cannot be split safely but needs a separate full gate run",
+  "root_cause": "allocator reuses a nonce after a failed submit",
+  "target_behavior": "a nonce is never reused after a failed submit",
+  "acceptance": [
+    {
+      "id": "AC1",
+      "text": "Failed submits release no reusable nonce",
+      "objectives": [
+        1
+      ]
+    },
+    {
+      "id": "AC2",
+      "text": "Concurrent submits get distinct nonces",
+      "objectives": [
+        1
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "at": "src/chain/nonce_allocator.py:18",
+      "claim": "decrements on failure"
+    },
+    {
+      "at": "tests/chain/test_nonce.py:44",
+      "claim": "only sequential cases"
+    }
+  ],
+  "decisions": [
+    {
+      "text": "Allocator becomes an actor with a reserve/commit API",
+      "why": "serializes concurrent callers",
+      "rejected": "lock around the class"
+    }
+  ],
+  "objectives": [
+    {
+      "title": "Actor-based allocator",
+      "files": [
+        "src/chain/nonce_allocator.py",
+        "tests/chain/test_nonce.py"
+      ],
+      "tests": [
+        "NonceTests.testNoReuseAfterFailure",
+        "NonceTests.testConcurrentDistinct"
+      ],
+      "action": "Write both failing tests, then rewrite the allocator",
+      "validate": "make test-filter FILTER=NonceTests"
+    }
+  ],
+  "pr_rows": [
+    {
+      "branch": "fix/nonce-allocator",
+      "base": "dev",
+      "objectives": [
+        1
+      ],
+      "keyword": "Closes"
+    }
+  ]
+}

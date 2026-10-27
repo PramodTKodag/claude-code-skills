@@ -49,6 +49,10 @@ jobs:
           done
           exit $fail
 
+      # plan-flow's bundled scripts: stdlib-only unit tests on throwaway local git repos.
+      - name: plan-flow script tests
+        run: python3 -B -m unittest discover -s plugins/plan-flow/skills/plan-flow/scripts -p 'test_*.py'
+
       # Official validator — best effort (does not fail the build if the CLI can't run headless).
       - name: claude plugin validate --strict (best effort)
         continue-on-error: true

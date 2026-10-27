@@ -1,0 +1,154 @@
+{
+  "issue": "https://github.com/example/service/issues/21",
+  "base": "dev@0123abcdef",
+  "compatibility": "greenfield",
+  "execution_root": "/work/service",
+  "setup": "Current checkout; create the PR branch from origin/dev per repo policy",
+  "security": {
+    "sensitive": false
+  },
+  "gates": {
+    "commands": [
+      "make validate"
+    ],
+    "conditional": [
+      {
+        "when": "HTTP, DTO or logging code changed",
+        "command": "make scan-secrets"
+      }
+    ]
+  },
+  "follow_up": "No consumer of the changed contract found; coverage limited to this repository.",
+  "rollback": "Revert the PR; no data or deployed state is touched.",
+  "title": "Freeze account operations during recovery",
+  "layout": "phased",
+  "layout_reason": "three flows with separate test matrices share one policy and one PR",
+  "root_cause": "recovery, rotation and device management each read the account state without the frozen flag",
+  "target_behavior": "every flow refuses to run while the account is frozen",
+  "acceptance": [
+    {
+      "id": "AC1",
+      "text": "Recovery refuses while frozen",
+      "objectives": [
+        1
+      ]
+    },
+    {
+      "id": "AC2",
+      "text": "Rotation refuses while frozen",
+      "objectives": [
+        2
+      ]
+    },
+    {
+      "id": "AC3",
+      "text": "Device management refuses while frozen",
+      "objectives": [
+        3
+      ]
+    },
+    {
+      "id": "AC4",
+      "text": "Flows share one frozen-state check",
+      "objectives": [
+        1,
+        2,
+        3
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "at": "src/recovery/recover.py:40",
+      "claim": "no frozen check before start",
+      "objectives": [
+        1
+      ]
+    },
+    {
+      "at": "src/rotation/rotate.py:55",
+      "claim": "no frozen check before start",
+      "objectives": [
+        2
+      ]
+    },
+    {
+      "at": "src/devices/manage.py:22",
+      "claim": "no frozen check before start",
+      "objectives": [
+        3
+      ]
+    },
+    {
+      "at": "src/core/account_state.py:9",
+      "claim": "state type already carries isFrozen"
+    }
+  ],
+  "decisions": [
+    {
+      "text": "One shared guard function in Core",
+      "why": "single policy, single test",
+      "rejected": "per-flow checks",
+      "objectives": [
+        1
+      ]
+    },
+    {
+      "text": "Guard throws accountFrozen",
+      "why": "callers already map thrown errors",
+      "rejected": "return false"
+    }
+  ],
+  "rules": [
+    "ADR-0001: product boundaries keep Core free of Billing imports"
+  ],
+  "objectives": [
+    {
+      "title": "Shared guard and recovery",
+      "files": [
+        "src/core/frozen_guard.py",
+        "src/recovery/recover.py"
+      ],
+      "tests": [
+        "FrozenGuardTests.testThrowsWhenFrozen",
+        "RecoveryTests.testRefusesWhenFrozen"
+      ],
+      "action": "Write the guard test, add the guard, apply it to recovery",
+      "validate": "make test-filter FILTER=FrozenGuardTests"
+    },
+    {
+      "title": "Rotation",
+      "files": [
+        "src/rotation/rotate.py"
+      ],
+      "tests": [
+        "RotationTests.testRefusesWhenFrozen"
+      ],
+      "action": "Write the rotation test, then apply the guard",
+      "validate": "make test-filter FILTER=RotationTests"
+    },
+    {
+      "title": "Device management",
+      "files": [
+        "src/devices/manage.py"
+      ],
+      "tests": [
+        "DeviceTests.testRefusesWhenFrozen"
+      ],
+      "action": "Write the device test, then apply the guard",
+      "validate": "make test-filter FILTER=DeviceTests"
+    }
+  ],
+  "pr_rows": [
+    {
+      "branch": "fix/frozen-account",
+      "base": "dev",
+      "objectives": [
+        1,
+        2,
+        3
+      ],
+      "keyword": "Closes"
+    }
+  ]
+}

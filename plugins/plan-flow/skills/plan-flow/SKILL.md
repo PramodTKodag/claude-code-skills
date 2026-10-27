@@ -1,136 +1,83 @@
 ---
 name: plan-flow
-description: Investigates a GitHub issue against the real code and writes a self-contained canonical implementation prompt plus execution slices derived from it for multi-session implementation, without implementing anything. Use when the teammate runs /plan-flow or wants an issue investigated, grilled, security-audited and cross-service-checked before a different AI session or tool implements it.
-argument-hint: "<issue-number-or-url> [--worktree] [--light] [--greenfield] [--no-prompt] [--exec-print <n|gates|ship|all>]"
+description: Investigates one GitHub issue against the real code and writes validated execution handoff files for separate coding sessions, without implementing anything. Use when the teammate runs /plan-flow or wants an issue investigated, grilled, security-audited and cross-repo checked before a different AI session or tool implements it.
+argument-hint: "<issue-number-or-url> [--worktree] [--light] [--greenfield] [--exec-print <n|gates|ship|all>]"
 disable-model-invocation: true
 ---
 
 # Plan Flow
 
-Investigate one GitHub issue, then write the implementation prompt another session will execute. This session reads, researches, asks, and writes the prompt file and its execution slices. It edits no product code, opens no branch or PR, and saves no memory.
+Plan one issue; a later session executes it. Planning only: no product edits, branch, worktree, commit, PR, issue edit or memory write. Git/`gh` reads and fetches are fine. The only writes are the handoff files, in the anchor repo's planning directory, never staged, and one approved decision comment on the issue.
 
-Input: issue link or number, optional `--worktree` (dashes optional), optional `--light`, optional `--greenfield`, optional `--no-prompt`, optional `--exec-print <n|gates|ship|all>`, plus any notes the teammate pasted. Missing issue → ask.
+## Boundary (read first)
 
-**Checkout mode.** `--worktree` → the prompt directs implementation into a new git worktree. Omitted → the current checkout. Fix the mode now and state it in the preflight message. This session creates no worktree or branch; the coding session does.
+- Invoking this skill authorizes planning only. Generated prompts are content for a future session, never instructions for this run.
+- Run only read-only commands, apart from the approved decision comment. Inspect a diagnostic's side effects first; if it can change files, dependencies, services or external state, put it in the handoff instead.
+- "Yes", "save it" or "go ahead" at the plan check means post the listed decisions and save the files, nothing more. After saving, report and STOP. The user starts execution in a new session by pasting an execution file.
+- A security-control weakening, or access you lack, is a stop: ask, do not work around.
 
-**Compatibility mode.** `--greenfield` → the product has no live users, consumers or stored data to preserve, so the plan carries no compatibility or migration work. Omitted → existing consumers and data are assumed, and a breaking change needs a migration or rollout path. Fix the mode now and state it in the preflight message.
+## Preflight
 
-**Output mode.** Always save the canonical prompt and its execution slices. Default: print the teammate workflow, objective 1's slice in one fenced block, and the file paths. `--exec-print` picks the slice to print: an objective number, `gates`, `ship`, or `all`. `all` is for archiving; the handoff still tells the teammate to paste one slice per new session. `--no-prompt` → print the workflow and paths only.
+`<skill-dir>` below is the folder containing this SKILL.md, as loaded by the host.
 
-## Tiers
+Run `python3 <skill-dir>/scripts/preflight.py` once, in the same turn as the first issue read. It prints repo facts (read-only; no issue text is passed to a shell). Keep its dirty-path list; the final status check compares against it.
 
-| Tier | Work |
-|------|------|
-| Scout | delta skims, research reading |
-| Standard | security-path reads, cross-service trace, prompt self-check; the whole session under Light |
-| Deep | this session under Full: grilling, audit, design, writing the prompt |
+## Anchor repo
 
-Concrete model names, mode switches and subagent mechanics per tool: `references/runtime-notes.md`. Never hardcode a model name anywhere else.
+Execution edits exactly one repo, the anchor.
 
-## Presets
+- Started inside a submodule: the anchor is that submodule unless the issue clearly belongs elsewhere (then ask).
+- Started at a parent checkout with submodules: pick the owning submodule from the issue; ask if unclear.
+- Read the guidance chain and profile printed by preflight (nearest first; the profile is `.agents/dev-flow-context.md` or `.claude/dev-flow-context.md`: guardrails, downstream consumers, test convention, base branch, `## Decisions`). Resolve base branch, workspace setup, validation commands and security-sensitive paths from them. With no profile, infer from build files and CI config and confirm once; do not guess.
+- Submodule not initialized: ask once before `git submodule update --init --depth 1 <path>`; if declined, read through `git show` or `gh api` and label the evidence as remote.
+- `docs/plans` "NOT ignored": ask where handoffs belong (local `.git/info/exclude` entry, a path outside the repo, or accept untracked files). Missing: ask for the planning directory.
 
-- **Full** (default): this session runs on Deep.
-- **Light**: a small single-repo issue with no security-sensitive path. This session runs on Standard, with no subagents and no second-model plan review.
+## Flags
 
-Chosen once at preflight, never re-asked per phase: a model switch re-bills the whole context.
+Require an issue URL or number; resolve the full URL. Dashes on flags are optional.
 
-**Escalate.** A session below Deep (Light, or Full with a missing model) stops when steps 3–5 show a security-sensitive path per the profile, a change to an API, type or behavior another repo consumes, or a decision that alters architecture or security. Name the trigger, then ask: switch to Deep (or plan in a tool that has it) and continue, or stay on this tier.
+- Default compatibility is `existing` (consumers and data are preserved). `--greenfield` plans with no live users or data to preserve; it never overrides accepted decisions, weakens controls or redeploys immutable state (planning.md, "Compatibility").
+- `--worktree`: the handoff directs execution into a new, approved worktree; planning creates none.
+- `--light`: Light depth for confirmed bounded, single-repo, non-sensitive work with no consumed-contract change, migration or architecture decision. Otherwise Full. Raise to Full when risk shows up, even with `--light`.
+- `--exec-print <n|gates|ship|all>`: print those file bodies, each in its own fence. Default: outcome, workflow and paths only.
 
-## 0. Preflight — one message, then proceed
+State checkout mode, compatibility and depth in one line after preflight.
 
-1. **Access.** The repo checkout and `gh` must be reachable. If not, stop and say so; never plan from docs or issue text alone.
-2. **Mode.** Switch to the tool's plan / read-only mode. Without one, stay read-only by discipline.
-3. **Preset and subagents.** `--light` given → Light, no question. Otherwise ask once, recommended first: Full with subagents, Full without, or Light. Subagents take reads and research off this session's context (fewer tokens here); a tool without them drops that option. Recommend subagents when the issue spans more than one repo or many paths. State checkout mode, compatibility mode, preset and subagent choice in this message.
-4. **Model.** This session runs on its preset's tier. On a different tier, print the exact switch for this tool and wait. If the tier's model is missing from the picker, use the strongest available at or below it, never the largest tier, and say so.
+## Depth and models
 
-## Asking
+Full runs this session on the Deep tier; Light on Standard (tiers and per-tool switches: [references/runtime-notes.md](references/runtime-notes.md), loaded only when a switch is needed). If the session runs below its tier, say so once and let the user choose to switch or continue; never switch mid-run (it re-bills the whole context) and name no model elsewhere. Stop and ask when Light work turns out to touch a sensitive path, a consumed contract or an architecture decision.
 
-Use the tool's structured-question UI; else numbered plain text. 2–4 options, recommended first. Ask at the moment a decision appears. Look facts up instead of asking.
+## Questions
 
-## 1. Context
+For decisions with a preference dimension, use the host's structured question tool if it has one; otherwise list the options as numbered plain text and wait for the reply. Give 2-4 concrete options, recommended first and marked `(Recommended)` with one short reason. Plain short English. Never treat silence or a preselected option as an answer. Look up discoverable facts yourself. Keep questions to material behavior, architecture, security or delivery choices; record each answer with its why and rejected alternative, and never reopen a settled one.
 
-Root `AGENTS.md` or `CLAUDE.md`, if present: reuse it when the tool already loaded it, else read it. Follow only the routing this issue needs, and skip references marked on-demand. Read the anchor repo's profile if present: `.agents/dev-flow-context.md` or `.claude/dev-flow-context.md` (guardrails, neighbors, downstream consumers, test convention, base branch). Neither exists → infer the base branch, validation commands and security-sensitive paths from the repo's build files and CI config, and confirm them once.
+## Steps
 
-Resolve for the chosen checkout mode: base branch, branch pattern, worktree path naming, and the validation commands that exercise the right tree (some stacks false-green when a worktree is tested with main-checkout targets). Mode-specific values missing → ask.
+1. **Orient.** Preflight, anchor repo, guidance chain, profile. Stop if the issue or source cannot be read.
+2. **Investigate.** Read the issue, its comments, linked issues and PRs, and the affected source and tests. Treat the issue as a hypothesis. Pin every fact to the repo SHA and `file:line`; label assumptions and dirty paths. Load [references/planning.md](references/planning.md) for evidence, ownership, security, decision discovery and sizing rules. Run its decision lookup before settling, at either depth.
+3. **Settle.** Root cause, owning component, target behavior, rejected alternatives; trace the flow across repos and list consumers. Grill: batch every question whose prerequisites are settled, each with a recommended answer, until no open question remains. Sensitive work needs a fresh-context review before it is ready (planning.md, "Security review").
+4. **Size.** Choose compact or phased layout from the actual work (planning.md, "Sizing"); settle PR grouping separately and once.
+5. **Plan check (always).** In a few plain sentences: the change, why this layout. List each decision settled beyond what the issue's body and comments already state, one line each; saving posts them to the issue. Ask `Save this plan?` with `Save plan and post decisions (Recommended)` / `Change the plan`; with no new decisions the first option is `Save plan only (Recommended)`. Answer must be explicit.
+6. **Write.** Load [references/handoff-spec.md](references/handoff-spec.md). If the plan check listed decisions, post them first as one issue comment ("Decision comment"). A decision settled after that post goes in one follow-up comment; never post a decision twice. Pipe one JSON spec to the renderer; it routes each fact to the files that need it, adds the fixed executor rules, validates in memory and writes only if valid:
 
-## 2. Issue
+   ```sh
+   python3 <skill-dir>/scripts/render_handoff.py --out <planning dir> <<'JSON'
+   { ...spec... }
+   JSON
+   ```
 
-`gh issue view <n> --comments`, plus linked issues and PRs. The issue is a hypothesis. Extract the ask, acceptance criteria, constraints, prior decisions.
+   Fix reported errors in the spec and rerun; no hand-edited output. Existing files: ask, then add `--replace-existing`. Files of another layout for the same issue (including an old `<issue>-implementation-prompt.md`) are the user's to resolve; never delete them.
+7. **Judge.** The validator checks structure only. Apply [references/quality-checks.md](references/quality-checks.md) for what it cannot judge.
+8. **Report.** Outcome, caveats, the ordered execution workflow, every saved path, the decision comment URL. Compact: one new session. Phased: one session per objective, then gates, then ship; unmet prerequisite means STOP. Tell the user to run the gate commands themselves and paste the gates file only if a gate fails or the work is sensitive. The user merges PRs. Say `Planning complete. No implementation performed.` Compare `git status` with preflight, ignoring the written files; report any other change and stop.
 
-If the body has `Verified at: <repo>@<sha>` and a `Read first` list: `git fetch`, diff those paths against base, and trust unchanged paths. Re-verify every security-invariant fact regardless.
+## Outcomes other than ready
 
-## 3. Real code, delta only
+Stop before the plan check and report plainly, writing no ready handoff: already fixed, cannot reproduce, needs information, wrong repo, duplicate. A blocked plan (missing access, unavailable required review) is labelled blocked with the exact blocker, never presented as ready.
 
-Read the paths the issue changes and each neighbor it relies on, in line ranges. Source is truth, not docs, comments, or prior summaries. With subagents on, run one reader per repo covering all of its targets, parallel across repos: every spawn loads a fresh base context, so a reader per file multiplies that cost. A repo's security-sensitive paths go to their own reader at Standard. Readers return one summary per target with `file:line`.
+## Economy
 
-Tag every fact **verified** (read, with `file:line`) or **assumed**. Record the commit each repo was read at (`git rev-parse HEAD`, noting uncommitted changes to the paths read); the prompt pins it.
-
-## 4. Cross-service
-
-Trace the flow across repos end to end. Place the fix in the generic component that owns the behavior, never as a downstream workaround. List candidate consumers from the profile's downstream list, if any, and from what the code shows, each with evidence or marked unverified. The prompt carries this list. The coding session edits the anchor repo only: when the component that owns the fix sits in another repo, write no objective or workspace for it. Ask the teammate whether to file an issue there for separate planning, and carry it in this list.
-
-## 5. Security, challenge, research
-
-- **Security.** Audit from code: authn/authz, ownership, signing, keys, replay, input, trust boundaries, logging. A change that weakens a control is a hard stop → ask.
-- **Challenge.** Does the proposed fix hit the root cause? Is there a simpler design, a better boundary, existing infrastructure, an unlisted edge case?
-- **Compatibility.** With `--greenfield`, plan no compatibility shims, legacy paths, dual support or old-data migrations in product code, and change earlier decisions (the issue's premise, an ADR, an existing API) when a better design is warranted, after asking the teammate. Without it, give every breaking change to an API, type, schema or behavior a migration or rollout path and an entry under "Decided". In both modes keep the smallest correct diff, never relax a security check, and flag already-deployed immutable state (on-chain contracts, shared dev/testnet data) as a cost.
-- **Research.** Search online only for time-sensitive or uncertain facts; primary sources; cite. One background reader when subagents are on.
-
-## 6. Grill
-
-Batch every question whose prerequisites are settled, each with a recommended answer. Ask only what materially changes architecture or security: product behavior, ownership, client- vs server-control, security assumptions. Repeat until no open question remains, so the coding session inherits decisions, not choices. Record each decision with its rejected alternatives for the prompt's "Decided" section. Confirm shared understanding before step 7.
-
-## 7. Decide
-
-Settle current behavior, root cause, target design, and concrete changes (files and APIs confirmed in code). Compare alternatives on security, correctness, maintainability, complexity; recommend one. Tests follow the repo's own convention; TDD only where the repo uses it. Make each objective testable on its own: each becomes one coding session, so changes that cannot be tested apart form one objective, and a change too small to justify its own session (a few lines) folds into the objective it supports.
-
-**PR split.** One objective → one PR, no ask. Two or more → ask once, recommended first by coupling and size: one PR (objectives tightly coupled or small together), one PR per objective (each stands alone), or a custom split. Record the answer under "Decided"; with more than one PR, the prompt carries it as the PR plan.
-
-Security-sensitive per the profile (auth, keys or crypto, payments, permissions, or paths it lists): run an independent plan review on Deep before writing. Use a different-vendor model when the tool offers one; else a fresh-context subagent labelled "not independent". Act on P0/P1; on disagreement, ask.
-
-## 8. Write the prompt and its slices
-
-Read `references/prompt-template.md` now, not earlier, and fill it. With two or more objectives, fill its Progress block with the objective titles; the coding session creates that file, never this one. With more than one PR, fill its PR plan from the split. Save it as the canonical prompt, `docs/plans/<issue>-implementation-prompt.md` in the anchor repo.
-
-Then read `references/execution-handoff-template.md` and derive from the canonical prompt one `<issue>-exec-obj-<n>.md` per objective, `<issue>-exec-gates.md` and `<issue>-exec-ship.md`, saved beside it. Never stage any file under `docs/plans/`; say so if the path is not git-ignored.
-
-Self-check before handing over, by one Standard subagent or inline when subagents are off:
-- every acceptance criterion maps to an objective
-- every verified fact carries `file:line`; assumptions are flagged; the Verified block pins each repo's commit
-- no open option or unanswered question remains; each decision sits under "Decided" with its rejected alternatives
-- a cold session can start objective 1 with no further research: objectives name confirmed paths, tests are named, validation commands are exact, the first action is concrete
-- every objective blocked on an unreleased library, an open issue or another external gate ends with a `waits on:` mark and its check command
-- the prompt opens with the implement-now directive and the run rule, and lists only the three mandatory stops
-- the Workspace section matches the chosen mode with a resolved path, branch and base, and Validation uses that mode's commands
-- the Workspace names one checkout, the anchor repo; every objective edits only it, and a needed change in another repo appears under Cross-service follow-up, never as an objective
-- a Progress block exists exactly when there are two or more objectives, and its titles match the Objectives
-- a PR plan exists exactly when the split chose more than one PR; every objective sits in exactly one row, and each row names its branch, base and issue keyword (`Closes` on the last row, `Refs` on the others)
-- the prompt is lean: no not-applicable section or leftover `<…>` hint, Verified lists only facts an objective or security requirement depends on, and no fact is restated across sections
-- the Issue line holds the full issue URL; the hard rule, hygiene, new-decisions-and-findings, after-merge (with the prompt file's absolute path), compatibility and cross-service blocks are present, and the compatibility block matches the chosen mode
-- a security-sensitive issue per the profile carries the pre-PR diff review line
-- no secrets, key material, or AI-tool names
-
-And for the slices:
-- one objective slice per canonical objective, plus the gates and ship slices
-- each objective slice meets the template's carry and leave-out lists: one objective, one focused test command, no full gate suite, and no Run rule, push, PR or issue step: ship work sits only in the ship slice, full validation only in the gates slice
-- each objective slice stays near 1,800 tokens (about 1,350 words); when over, cut repeats and wording, never a fact
-- every canonical Security requirements line appears in the slice of each objective it touches and in the gates slice; standing invariants appear as the template's pointer, not a pasted table
-- a slice whose objective waits on an unmet external release or issue opens with a STOP line
-- the ship slice's start comment matches Decided, and its PR rows and issue keywords match the canonical PR plan
-- objective slices forbid issue comments; the ship slice owns the start comment and every `Decisions:` post from the progress file
-- objectives follow the step 7 sizing: each maps to one slice session, is testable alone, and trivial edits sit folded into the objective they support
-- the printed teammate workflow has no `<…>`, and step 6's security-sensitive tail matches the profile
-- each objective slice's Validate command is quiet: no verbose flag, and no pipe that hides the exit code
-- the canonical prompt still passes every check above on its own
-
-Fix gaps. Then reply with a report of at most 25 lines: issue summary, root cause, design, security findings, edge cases, alternatives, open questions. Follow it with the handoff: the template's teammate workflow block, filled; the slice `--exec-print` names (default objective 1; `all` prints each slice) in its own fenced block; and one line listing the canonical prompt and every slice path. With `--no-prompt`, give the workflow block and the paths only. End by suggesting `/clear`.
-
-## Rules
-
-- Tokens: summaries over dumps, line ranges over whole files, no re-reads, scope to the delta.
-- Use the repo's own domain terms.
-- The prompt names no tool-specific commands or skills.
-- Print the teammate workflow block on every handoff, and the chosen slice in a fenced block unless `--no-prompt`; saved files alone are not a handoff.
-- Interactive implementation runs from the slices, one new session each, never from a pasted canonical prompt.
-- The prompt edits one repo, the anchor repo. Changes elsewhere go to issues, never to objectives.
-- No memory writes. No product edits. Git is read-only; write only the prompt and slice files under `docs/plans/`.
+- One continuous session from invoke to save: switching model or effort mid-run invalidates the prompt cache.
+- Batch independent tool calls in one turn. Use bounded ranges and `rg`; never repeat an unchanged call or re-read an unchanged file.
+- Prefer script output (`preflight.py`, renderer report) over reading files. Load a reference only when its step starts.
+- Delegate only large read-only sweeps, one reader per repo, summaries back, and only with the user's OK. The sensitive-plan review is separate and required; you still decide what its findings change.
+- Handoff files are the cost that repeats: the renderer keeps each objective file to its own facts. Do not add prose to a spec field the file already states.

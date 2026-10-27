@@ -3,7 +3,7 @@
   "name": "plan-flow",
   "displayName": "Plan Flow",
   "version": "0.3.0",
-  "description": "Investigate a GitHub issue against the real code — cross-service, security, design challenge — and write a self-contained implementation prompt for a separate coding session. Never implements the issue.",
+  "description": "Investigate a GitHub issue against the real code — cross-repo, security, decision records, design challenge — and write validated execution handoff files for separate coding sessions in any AI tool. Never implements the issue.",
   "author": {
     "name": "Pramod Kodag",
     "email": "pramodkodag.dev@gmail.com"
@@ -15,7 +15,7 @@
     "github-issues",
     "security-review",
     "cross-service",
-    "implementation-prompt",
+    "decision-records",
     "agent-skills",
     "codex",
     "cursor"
