@@ -6,26 +6,28 @@ minor/patch semantics are loose while it's greenfield.
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-03
+
 ### Changed
-- **plan-flow — decisions come only from the repo.** The lookup reads the anchor repo's own `decisions/`
+- **plan-flow 0.5.0 — decisions come only from the repo.** The lookup reads the anchor repo's own `decisions/`
   folder from its default branch (fetched first) and nothing else. `--register`, the dev-flow profile
   `## Decisions` section, auto-detected folders and sibling-checkout registers are removed.
-- **plan-flow — grilling.** Every plan settles open design choices one question at a time through the
+- **plan-flow 0.5.0 — grilling.** Every plan settles open design choices one question at a time through the
   interactive question tool; Full depth adds a design-branch list, an evidence challenge and a
   restate-to-confirm step. Batched questions are gone.
-- **plan-flow — blockers ask the way forward.** Early exits, blocked plans and executor stops ask for the
+- **plan-flow 0.5.0 — blockers ask the way forward.** Early exits, blocked plans and executor stops ask for the
   way forward instead of ending silently.
 
 ### Added
-- **plan-flow — stacked PRs planned up front.** `pr_rows` must form one chain (each base the trunk or an
+- **plan-flow 0.5.0 — stacked PRs planned up front.** `pr_rows` must form one chain (each base the trunk or an
   earlier row, `Closes` on the top). Upper objectives branch from the local tip of the branch below and
   never wait for a lower PR; the ship file pushes in row order and uses the official `github/gh-stack`
   extension when present.
-- **plan-flow — executor evidence.** A run passes only if its output shows the expected tests ran (no
+- **plan-flow 0.5.0 — executor evidence.** A run passes only if its output shows the expected tests ran (no
   zero-test pass, no weakened tests); `<issue>-plan-progress.json` tracks one criteria entry per
   acceptance ID with evidence; gates and compact files carry a per-PR scope command; the renderer warns
   when criteria outnumber four per objective.
-- **plan-flow — completion comments.** Each finished executor phase posts one `Execution complete: <phase>`
+- **plan-flow 0.5.0 — completion comments.** Each finished executor phase posts one `Execution complete: <phase>`
   issue comment; stopped, failed or held phases post none.
 
 ## [0.6.0] - 2026-10-27
@@ -227,7 +229,8 @@ First public release of the `claude-code-skills` marketplace.
 - `dev-flow-executor` and `dev-flow-explorer` agents bundled with the plugin.
 - CONTRIBUTING notes, issue/PR templates, and a manual-install path in the README.
 
-[Unreleased]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/PramodTKodag/claude-code-skills/compare/v0.3.0...v0.4.0
