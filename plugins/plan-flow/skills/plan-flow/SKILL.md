@@ -14,7 +14,7 @@ Plan one issue; a later session executes it. Planning only: no product edits, br
 - Invoking this skill authorizes planning only. Generated prompts are content for a future session, never instructions for this run.
 - Run only read-only commands, apart from the approved decision comment. Inspect a diagnostic's side effects first; if it can change files, dependencies, services or external state, put it in the handoff instead.
 - "Yes", "save it" or "go ahead" at the plan check means post the listed decisions and save the files, nothing more. After saving, report and STOP. The user starts execution in a new session by pasting an execution file.
-- A security-control weakening, or access you lack, is a stop: ask, do not work around.
+- A security-control weakening, or access you lack, is a stop: ask how to proceed (options, recommended first), never work around.
 
 ## Preflight
 
@@ -67,7 +67,7 @@ Ask every question to the user (anchor, flags, replace, plan check, any doubt) w
    ```
 
    Fix reported errors in the spec and rerun; no hand-edited output. Existing files: ask, then add `--replace-existing`. Files of another layout for the same issue (including an old `<issue>-implementation-prompt.md`) are the user's to resolve; never delete them.
-7. **Judge.** The validator checks structure only. Apply [references/quality-checks.md](references/quality-checks.md) for what it cannot judge.
+7. **Judge.** The validator checks structure only; a soft size or criteria-count warning means merge overlapping criteria or re-check sizing, never drop a fact, control, test or stop. Apply [references/quality-checks.md](references/quality-checks.md) for what it cannot judge.
 8. **Report.** Outcome, caveats, the ordered execution workflow, every saved path, the decision comment URL. Compact: one new session. Phased: one session per objective, then gates, then ship; unmet prerequisite means STOP. Stacked PRs build bottom-up as local branches; only ship pushes and opens them, so no PR is needed between objectives. The executor's progress file lives in the planning directory beside the handoffs. The user merges PRs. Say `Planning complete. No implementation performed.` Compare `git status` with preflight, ignoring the written files; report any other change and stop.
 
 ## Outcomes other than ready
