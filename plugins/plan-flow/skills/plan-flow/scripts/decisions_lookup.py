@@ -1,12 +1,9 @@
 """Live decision lookup for planning, printed as short lines.
 
-Reads architecture-decision registers (ADR-style directories) at a pinned git ref, fetched first so the
-latest accepted decisions are seen. Nothing is cached or hardcoded: the decision files are the source of
-truth, README tables only supply summary text. Registers come from, in order of precedence:
-  1. --register PATH[@REF] flags (repeatable; the first binds first),
-  2. the `## Decisions` section of the repo profile (.agents/ or .claude/dev-flow-context.md),
-  3. auto-detection among the usual directories (docs/decisions, docs/adr, adr, ...).
-A relative PATH is relative to the anchor repo; PATH may point into another checkout. PATH cannot contain `@`.
+Reads the repo's own `decisions/` folder (ADR-style files) from its default branch, fetched first so the
+latest accepted decisions are seen. Only the anchor repo is read: no other repo, path or profile setting
+can add a register. Nothing is cached or hardcoded: the decision files are the source of truth, README
+tables only supply summary text.
 
 Terms (behavior words, touched paths) arrive on stdin so no issue text reaches a shell. The only write
 is `git fetch`. The output is a lexical candidate list, never proof that no other decision applies.
@@ -21,16 +18,14 @@ import re
 import subprocess
 import sys
 
-from preflight import PROFILE_PATHS, capped, git, run
+from preflight import capped, git, run
 
-DEFAULT_REGISTERS = ("docs/decisions", "docs/adr", "docs/adrs", "docs/architecture/decisions",
-                     "adr", "adrs", "decisions", "doc/adr", "doc/arch")
+REGISTER = "decisions"
 ORIGIN_FALLBACKS = ("origin/main", "origin/master", "origin/dev", "origin/trunk")
 FETCH_TIMEOUT = 30
 READ_TIMEOUT = 8
 MAX_READ = 12000
-TOP_FIRST = 10
-TOP_LATER = 6
+TOP_CANDIDATES = 10
 MAX_RELATED = 6
 MIN_SCORE = 1.0
 RELATIVE_FLOOR = 0.25
@@ -109,64 +104,19 @@ def fetch(root):
     return run(command, root, timeout=FETCH_TIMEOUT) is not None
 
 
-class Checkouts:
-    """Opens each checkout once: one fetch per checkout however many registers it holds."""
-
-    def __init__(self, do_fetch):
-        self.do_fetch = do_fetch
-        self.fetched = {}
-
-    def fetch_state(self, root):
-        if not self.do_fetch:
-            return "fetch skipped"
-        if root not in self.fetched:
-            self.fetched[root] = fetch(root)
-        return "fetched" if self.fetched[root] else "fetch failed, last known"
-
-    def open(self, root, explicit_ref):
-        state = self.fetch_state(root)
-        if explicit_ref and not verified(root, explicit_ref):
-            return Source(root, None), f"working tree (ref {explicit_ref} not found)"
-        ref = explicit_ref or next((r for r in default_refs(root) if verified(root, r)), None)
-        if ref is None:
-            return Source(root, None), "working tree (no origin ref)"
-        return Source(root, ref), f"{ref}@{git(root, 'rev-parse', '--short', ref)} ({state})"
-
-
-def split_ref(token):
-    path, at, ref = token.partition("@")
-    return (path.strip(), ref.strip() if at else "")
+def open_source(root, do_fetch):
+    """(Source, how it was read): fetches first, then reads the default branch, else the working tree."""
+    fetched = do_fetch and fetch(root)
+    state = "fetched" if fetched else "fetch skipped" if not do_fetch else "fetch failed, last known"
+    ref = next((r for r in default_refs(root) if verified(root, r)), None)
+    if ref is None:
+        return Source(root, None), "working tree (no origin ref)"
+    return Source(root, ref), f"{ref}@{git(root, 'rev-parse', '--short', ref)} ({state})"
 
 
 def section(text, name):
     found = re.search(rf"^##\s+{name}\s*\n(.*?)(?=^##\s|\Z)", text, re.M | re.S | re.I)
     return found.group(1) if found else ""
-
-
-def profile_registers(top):
-    """Backticked `path[@ref]` tokens from the profile's `## Decisions` section, in listed order."""
-    for relative in PROFILE_PATHS:
-        profile = Path(top) / relative
-        if profile.is_file():
-            body = section(profile.read_text(encoding="utf-8", errors="replace"), "Decisions")
-            return [split_ref(token) for token in re.findall(r"`([^`\n]+)`", body)]
-    return []
-
-
-def locate(base, path):
-    """(checkout root, path inside it) for a register path, or (None, path) outside any git checkout."""
-    target = Path(path).expanduser()
-    target = (target if target.is_absolute() else Path(base) / target).resolve()
-    probe = target
-    while not probe.exists() and probe != probe.parent:
-        probe = probe.parent
-    root = git(probe, "rev-parse", "--show-toplevel")
-    if not root:
-        return None, path
-    try:
-        return Path(root).resolve(), target.relative_to(Path(root).resolve()).as_posix()
-    except ValueError:
-        return None, path
 
 
 def status_block(text):
@@ -285,73 +235,47 @@ def print_decisions(decisions, terms, limit):
         print("  (no candidate matched the terms)")
 
 
-def report_register(tier, spec, checkouts, anchor, terms):
-    """Print one register's candidates; returns its coverage lines."""
-    path, explicit_ref = spec
-    root, inside = locate(anchor, path)
-    heading = f"Tier {tier} - {path}"
-    if root is None:
-        print(f"{heading}: UNAVAILABLE")
-        return [f"{path} is not inside a git checkout; read it by hand and state this gap"]
-    source, how = checkouts.open(root, explicit_ref)
-    decisions, indexed = scan_register(source, inside)
-    note = "binds before later tiers; " if tier == 1 else "refines earlier tiers; must not contradict them; "
-    print(f"{heading} ({note}Accepted binds; Proposed/Unrecognized is unsettled: ask if design depends on it; "
+def report_register(root, terms, do_fetch):
+    """Print the repo's decision candidates; returns the coverage lines."""
+    source, how = open_source(root, do_fetch)
+    decisions, indexed = scan_register(source, REGISTER)
+    print(f"Repo decisions - {REGISTER}/ (Accepted binds; Proposed/Unrecognized is unsettled: ask if design depends on it; "
           "Superseded/Deprecated/Rejected do not bind)")
     if not decisions:
         print("  (no decision files found)")
-        return [f"{path} (checkout {root}) read at {how}: no decision files"]
-    print_decisions(decisions, terms, TOP_FIRST if tier == 1 else TOP_LATER)
+        return [f"{REGISTER}/ read at {how}: no decision files; state this gap, do not claim decision coverage"]
+    print_decisions(decisions, terms, TOP_CANDIDATES)
     counts = Counter(d.status for d in decisions)
-    coverage = [f"{path} (checkout {root}) read at {how}: {len(decisions)} scanned (" +
-                ", ".join(f"{s} {n}" for s, n in sorted(counts.items())) + ")"]
+    coverage = [f"{REGISTER}/ read at {how}: {len(decisions)} scanned (" + ", ".join(f"{s} {n}" for s, n in sorted(counts.items())) + ")"]
     if source.ref:
-        changed = set((git(root, "diff", "--name-only", source.ref, "--", inside) or "").splitlines())
-        changed |= set((git(root, "diff", "--name-only", "HEAD", source.ref, "--", inside) or "").splitlines())
+        changed = set((git(root, "diff", "--name-only", source.ref, "--", REGISTER) or "").splitlines())
+        changed |= set((git(root, "diff", "--name-only", "HEAD", source.ref, "--", REGISTER) or "").splitlines())
         if changed:
-            coverage.append(f"{path} working tree differs from {source.ref} in {len(changed)} file(s); "
-                            f"{source.ref} was read, so open files with `git -C {root} show {source.ref}:<path>`")
+            coverage.append(f"{REGISTER}/ working tree differs from {source.ref} in {len(changed)} file(s); "
+                            f"{source.ref} was read, so open files with `git show {source.ref}:<path>`")
     if indexed:
         files = {Path(d.path).name for d in decisions}
-        coverage += capped([f"{name} listed in {path}/README.md but no file" for name in sorted(indexed - files)
+        coverage += capped([f"{name} listed in {REGISTER}/README.md but no file" for name in sorted(indexed - files)
                             if FILE_RE.match(name)] +
-                           [f"{name} has no {path}/README.md row" for name in sorted(files - indexed)], "README mismatches")
+                           [f"{name} has no {REGISTER}/README.md row" for name in sorted(files - indexed)], "README mismatches")
     return coverage
 
 
-def detect_registers(anchor, checkouts):
-    """Usual register directories that hold at least one decision file in the anchor repo."""
-    source, _ = checkouts.open(Path(anchor), None)
-    return [(path, "") for path in DEFAULT_REGISTERS if any(FILE_RE.match(n) for n in source.names(path))]
-
-
 def main():
-    parser = argparse.ArgumentParser(description="Live decision lookup; terms on stdin.")
-    parser.add_argument("--register", action="append", default=[], metavar="PATH[@REF]",
-                        help="decision register directory; repeat for several, earlier binds first")
+    parser = argparse.ArgumentParser(description="Live decision lookup of the repo's decisions/ folder; terms on stdin.")
     parser.add_argument("--no-fetch", action="store_true", help="skip git fetch (offline)")
     args = parser.parse_args()
     terms = sorted(words("" if sys.stdin.isatty() else sys.stdin.read()))
     if not terms:
         print("decisions lookup: no terms on stdin; pass 5-12 behavior terms and touched paths")
         return 0
-    cwd = Path.cwd()
-    top = git(cwd, "rev-parse", "--show-toplevel")
-    anchor = top or str(cwd)
-    checkouts = Checkouts(not args.no_fetch)
-    registers = [split_ref(token) for token in args.register]
-    origin = "--register flags"
-    if not registers and top:
-        registers, origin = profile_registers(top), "profile `## Decisions`"
-    if not registers and top:
-        registers, origin = detect_registers(top, checkouts), "auto-detected directories"
-    print(f"decisions lookup (lexical candidates from titles and README summaries; verify each Status and Decision); registers from {origin}")
-    coverage = []
-    for tier, spec in enumerate(registers, start=1):
-        coverage += report_register(tier, spec, checkouts, anchor, terms)
-    if not registers:
-        print("  (no decision register configured or found)")
-        coverage.append("no register: add a `## Decisions` section to the profile or pass --register; do not claim decision coverage")
+    root = git(Path.cwd(), "rev-parse", "--show-toplevel")
+    print("decisions lookup (lexical candidates from titles and README summaries; verify each Status and Decision)")
+    if root:
+        coverage = report_register(Path(root), terms, not args.no_fetch)
+    else:
+        print("  (cwd is not inside a git repository)")
+        coverage = ["no repository: no decisions were read; do not claim decision coverage"]
     coverage.append("lexical match only, so absence of a hit is not proof that no decision applies")
     for line in coverage:
         print(f"coverage: {line}")
