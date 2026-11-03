@@ -24,32 +24,54 @@ RULES = """\
 - Output: run checks as `set -o pipefail; <cmd> 2>&1 | tail -n 60`; if the cause is not visible, rerun only the failing test verbosely. Report outcomes, not logs.
 - Public text (code, commits, PRs, issues, comments): no assistant or tool attribution (including default `Co-Authored-By` or "generated with" trailers), hidden reasoning, secrets, key material or exploit detail; use the repo's own domain terms and glossary; `#N` refs only in commit or PR bodies, stating issue or PR; a cross-repo reference names only what the work needs.
 - Decisions: when a choice the issue (body and comments) does not state is settled this session (user answer, deviation from this file), post it at once as one issue comment, `Execution decision: <choice>; why; rejected alternative`, under the Public text rules; routine mechanical choices do not. Log the comment ID under Decisions in the progress file; never repost. If `gh` fails, log the text there and tell the user.
-- Stop, record, end the run: objective invalidated, security control weakened, missing access or dependency, or scope growth. Out-of-scope findings: record, never fix or file. Vulnerabilities: tell the user privately now. Unresolved choices need the user's answer."""
+- Tests: pass only if the output shows the expected tests ran and passed; `no tests to run`, a zero count or an unmatched filter is a failure. Never delete, skip or weaken a test or assertion to get green; change one only if the required behavior changes, and record why.
+- Stop, record: objective invalidated, security control weakened, missing access or dependency, or scope growth. Out-of-scope findings: record, never fix or file. Vulnerabilities: tell the user privately now. Unresolved choices or any stop: ask (Questions) with the ways forward; never wait silently; continue only on an answer that clears it.
+- Completion comment: once this phase's work is fully done (never partial, never before its checks pass), post one issue comment `Execution complete: <phase>` saying what was done, under the Public text rules. Log its ID under `comments` in the progress file; never repost. A stop or failure posts nothing. If `gh` fails, log the text there and tell the user.
+- Questions: ask only via the host's interactive question tool (numbered text if none), never in reply text. Plain short English; 2-4 options, recommended first as `(Recommended)` with a short reason. A runner contract that forbids asking overrides."""
 
 PHASE_RULE = {
-    "compact": "Phase: implement and commit, then validate (Gates), then publish (Ship) only when authorized and gates are fresh. If interrupted or resuming, create the progress file first so decisions and posted IDs are not lost.",
+    "compact": "Phase: implement and commit, then validate (Gates), then publish (Ship) only when authorized and gates are fresh. If interrupted or resuming, create the progress file first so decisions and posted IDs are not lost. Post a completion comment per stage (objective, gates, ship), each only when that stage is done.",
     "objective": "Phase: implement and commit this objective only. No push, PR or full gate suite.",
     "gates": "Phase: validate only; fix in-scope failures. No push or PR.",
     "ship": "Phase: publish only with authority and current-commit gate evidence; implement nothing new.",
 }
 
-PROGRESS_FORMAT = "Progress file `{dir}/{issue}-plan-progress.md`, at most 30 lines: Next, Done (objective -> SHA), Decisions (posted IDs), Findings, Gates (tip SHA, result), PRs."
+PROGRESS_FORMAT = (
+    "Progress file `{planning}/{issue}-plan-progress.json`, created on first use: "
+    '{{"next":"","done":{{"<objective>":"<sha>"}},"decisions":["<comment id>"],"findings":[],"gates":{{"tip":"","result":""}},"prs":[],"comments":{{"<phase>":"<comment id>"}},'
+    '"criteria":{{"<AC id>":{{"status":"pending","evidence":""}}}}}}. '
+    "Edit values only, never remove or rename keys; `passing` only with evidence (test or command, result, tip SHA)."
+)
+
+OBJECTIVE_COMPLETION = "Completion comment (Rules) after the commit and passing validation: objective title, commit SHA, what changed and why, tests run and passed, deviations."
+
+GATES_COMPLETION = "Completion comment (Rules) after every criteria entry is set: branch-tip SHAs, commands and results, review outcome, criteria passing, failing or unvalidated."
 
 GATES_FIXED = "Run at each branch tip, in the checkout that contains the change; confirm mounts and build contexts exercise that checkout. Fix in-scope failures and rerun affected checks; if code changes, rerun review and checks on the new commit. Report any requirement not validated."
 
-FRESH_EVIDENCE = "Gate evidence is fresh only if each PR branch tip equals its recorded SHA, `git status --porcelain` is empty and tool versions are unchanged. Otherwise rerun the affected commands below or stop with the exact blocker. Never accept a recollection of a green run."
+FRESH_EVIDENCE = "Gate evidence is fresh only if each PR branch tip equals its recorded SHA, `git status --porcelain` is empty and tool versions are unchanged. Otherwise rerun the affected commands below or stop with the exact blocker. Never accept a recollection of a green run. Every criteria entry in the progress file must be `passing` with evidence, else report it unvalidated."
 
 SHIP_STEPS = """\
-1. Resolve recorded side findings with the user before any PR: include with authority, or a separately authorized issue. No automatic scope growth.
-2. Check authority for each external action; a planning request alone authorizes no issue edit, push, PR or follow-up issue; decision comments (Rules) are standing.
-3. Issue record: when authorized, reconcile accepted decisions, non-goals and acceptance into the issue body (the body is the execution contract); otherwise report the body as unreconciled. Decisions already posted stay as comments: check existing comments and progress first so nothing is reposted.
-4. Inspect the final diff; ask about splitting if it outgrew reviewable scope. Push task branches and open the PR rows below in order against their bases. `Closes #N` only on the row with keyword=Closes; `Refs #N` rows list the open criteria. Never merge.
-5. Stacked PRs: merge in row order. GitHub retargets a stacked PR only when the branch below it is deleted on merge, and `Closes` fires only for PRs merged into the default branch, so verify each later PR's actual base before merging it.
-6. Report gaps first: unvalidated items and follow-ups, then PR URLs, CI run links, exact validation and review outcomes, deviations, remaining waits (URL and holder). State publication as local-only, pushed, PR open or merged."""
+1. Ask (Questions) about each recorded side finding before any PR: include with authority, or a separately authorized issue. No automatic scope growth.
+2. Check authority for each external action; a planning request alone authorizes no issue edit, push, PR or follow-up issue; decision and completion comments (Rules) are standing. Not granted: ask `Push and open PRs (Recommended)` / `Hold`.
+3. Issue record: when authorized, reconcile accepted decisions, non-goals and acceptance into the issue body (the body is the execution contract); otherwise report the body as unreconciled. Never repost a decision already commented.
+4. Inspect the final diff; if too big to review, ask about splitting. Push task branches and open the PR rows below in order against their bases. `Closes #N` only on the row with keyword=Closes; `Refs #N` rows list the open criteria. Never merge.
+5. Report gaps first (criteria not passing, unvalidated items, follow-ups), then PR URLs, CI links, exact validation and review outcomes, deviations, remaining waits (URL, holder). State publication as local-only, pushed, PR open or merged.
+6. Completion comment (Rules), once every PR row is open: PR URLs, CI status, publication state, gaps. Hold or a stop posts none."""
+
+STACK_STEPS = (
+    "Stack: rows are one chain, bottom first; its branches exist locally, so publish together here. "
+    "With the official `github/gh-stack` extension: `gh stack init -b {trunk} <row branches in order>`, then `gh stack submit --auto` (linked draft PRs; the user marks them ready before `gh stack merge`). "
+    "Otherwise push in row order and `gh pr create --draft --base <row base>`, each body listing the stack. "
+    "The user merges bottom-up. Manual stack: retarget each later PR to {trunk} before its merge "
+    "(squash-merge repo: `git rebase --onto origin/{trunk} <merged branch> <next branch>`; ask before the force push)."
+)
 
 FOLLOW_UP_FIXED = "After implementation, inspect the changed contract and each candidate's consumed version, and search for more consumers. For truly affected repos create only separately authorized issues (generic behavior, acceptance, rollout order); edit no other repo. If issue creation is unavailable, save a labelled draft and report it."
 
-STOP_RULE = "Stop and record in the progress file for any stop in Rules."
+MAX_CRITERIA_PER_OBJECTIVE = 4
+
+STOP_RULE = "Any stop in Rules: record it, then ask the way forward (Questions)."
 
 
 class SpecError(ValueError):
@@ -176,6 +198,50 @@ def check_spec(spec):
     for number in range(1, count + 1):
         if covered.count(number) != 1:
             errors.append(f"pr_rows: objective {number} must be in exactly one row (found {covered.count(number)})")
+    return errors or stack_errors(spec)
+
+
+def spec_warnings(spec):
+    """Soft size signals; the plan is still valid."""
+    warnings = []
+    criteria, objectives = len(spec["acceptance"]), len(spec["objectives"])
+    if criteria > MAX_CRITERIA_PER_OBJECTIVE * objectives:
+        warnings.append(f"acceptance: {criteria} criteria for {objectives} objective(s); merge overlapping ones or re-check sizing, never drop a security control")
+    return warnings
+
+
+def stack_errors(spec):
+    """How PR rows chain: each base is the trunk or an earlier row, each row has one child, and work builds upward."""
+    trunk, rows = trunk_of(spec), spec["pr_rows"]
+    errors, seen, children = [], {}, {}
+    for n, row in enumerate(rows, start=1):
+        if row["branch"] in seen:
+            errors.append(f"pr_rows: PR{n} repeats branch {row['branch']}")
+        seen[row["branch"]] = n
+        if row["base"] == trunk:
+            continue
+        if row["base"] not in seen or seen[row["base"]] == n:
+            errors.append(f"pr_rows: PR{n} base must be {trunk} or the branch of an earlier row (got {row['base']})")
+        elif row["base"] in children:
+            errors.append(f"pr_rows: PR{n} and PR{children[row['base']]} both stack on {row['base']}; a stack is one chain")
+        else:
+            children[row["base"]] = n
+    if errors:
+        return errors
+    allowed = {}
+    for n, row in enumerate(rows, start=1):
+        lower = rows_below(spec, row)
+        lower_objectives = {o for r in lower for o in r["objectives"]}
+        if lower_objectives and min(row["objectives"]) <= max(lower_objectives):
+            errors.append(f"pr_rows: PR{n} objectives must all come after the objectives of the PR(s) it stacks on")
+        if row["keyword"] == "Closes" and row["branch"] in children:
+            errors.append(f"pr_rows: PR{n} stacks under PR{children[row['branch']]}; Closes belongs on the top of the stack")
+        for number in row["objectives"]:
+            allowed[number] = set(row["objectives"]) | lower_objectives
+    for number, objective in enumerate(spec["objectives"], start=1):
+        for prerequisite in objective.get("prerequisites", []):
+            if prerequisite not in allowed.get(number, ()):
+                errors.append(f"objectives[{number}].prerequisites: objective {prerequisite} is not in this PR or a PR it stacks on")
     return errors
 
 
@@ -251,6 +317,32 @@ def gates_lines(spec):
     return "\n".join(lines)
 
 
+def trunk_of(spec):
+    return BASE_VALUE.fullmatch(spec["base"]).group(1)
+
+
+def rows_below(spec, row):
+    """PR rows `row` is stacked on, nearest first; empty when it targets the trunk."""
+    by_branch = {r["branch"]: r for r in spec["pr_rows"]}
+    below = []
+    while row["base"] in by_branch:
+        row = by_branch[row["base"]]
+        below.append(row)
+    return below
+
+
+def scope_check_lines(spec):
+    """One git command per PR row that prints changed paths no objective planned; empty output means in scope."""
+    trunk, lines = trunk_of(spec), []
+    for n, row in enumerate(spec["pr_rows"], start=1):
+        base = f"origin/{row['base']}" if row["base"] == trunk else row["base"]
+        planned = dict.fromkeys(path for number in row["objectives"] for path in spec["objectives"][number - 1]["files"])
+        excludes = " ".join(shlex.quote(f":!{path}") for path in planned)
+        lines.append(f"- PR{n} scope: `git diff --name-only {base}...{row['branch']} -- . {excludes}`")
+    return ("Scope check: each command prints changed paths outside the plan; justify every printed path under findings in the progress file, or revert it.\n"
+            + "\n".join(lines))
+
+
 def pr_rows(spec):
     return "\n".join(
         PR_ROW_FORMAT.format(n=i, branch=r["branch"], base=r["base"], objectives=",".join(map(str, r["objectives"])), keyword=r["keyword"])
@@ -258,12 +350,13 @@ def pr_rows(spec):
 
 
 def ship_lines(spec):
-    return f"{SHIP_STEPS}\n\nPR rows:\n{pr_rows(spec)}\nRollback: {spec['rollback']}"
+    stack = "\n" + STACK_STEPS.format(trunk=trunk_of(spec)) if any(r["base"] != trunk_of(spec) for r in spec["pr_rows"]) else ""
+    return f"{SHIP_STEPS}\n\nPR rows:\n{pr_rows(spec)}{stack}\nRollback: {spec['rollback']}"
 
 
 def cleanup_lines(spec, paths, out_dir):
     listing = "\n".join(f"- {p}" for p in paths)
-    progress = f"{out_dir}/{ISSUE_URL.fullmatch(spec['issue']).group(1)}-plan-progress.md"
+    progress = f"{out_dir}/{ISSUE_URL.fullmatch(spec['issue']).group(1)}-plan-progress.json"
     return (f"Generated files, absolute:\n{listing}\n- {progress} (only if created)\n"
             "Keep them until every PR is independently verified MERGED, then list these files and get the user's deletion confirmation. "
             "Never glob or delete another checkout's planning files; never remove a worktree without authority.")
@@ -313,9 +406,9 @@ def render(spec, issue, out_dir):
             ("Acceptance", acceptance_lines(spec)),
             ("Evidence", evidence_lines(spec)),
             ("Decisions", decision_lines(spec, layout=True)),
-            ("Objective", objective_section(1, objective) + f"\nFocused check: `{wrap(objective['validate'])}`"),
+            ("Objective", objective_section(1, objective) + f"\nFocused check: `{wrap(objective['validate'])}`\n{OBJECTIVE_COMPLETION}"),
             ("Security", security_lines(spec)),
-            ("Gates", f"{gates_lines(spec)}\nRecord results if interrupted: {PROGRESS_FORMAT.format(dir=out_dir, issue=issue)}"),
+            ("Gates", f"{gates_lines(spec)}\n{scope_check_lines(spec)}\n{GATES_COMPLETION}\nRecord results if interrupted: {PROGRESS_FORMAT.format(planning=out_dir, issue=issue)}"),
             ("Ship", ship_lines(spec)),
             ("Follow-up", follow_up_lines(spec)),
             ("Cleanup", cleanup_lines(spec, paths, out_dir)),
@@ -326,9 +419,18 @@ def render(spec, issue, out_dir):
     for number, objective in enumerate(spec["objectives"], start=1):
         row = next(r for r in spec["pr_rows"] if number in r["objectives"])
         first = min(row["objectives"]) == number
-        branch = f"Branch: {row['branch']} (PR base {row['base']}); " + (
-            f"first objective of this PR: create it from origin/{row['base']}." if first else "reuse the existing branch.")
+        lower = rows_below(spec, row)
+        if not first:
+            branch = f"Branch: {row['branch']} (PR base {row['base']}); reuse the existing branch."
+        elif lower:
+            branch = (f"Branch: {row['branch']} (PR base {row['base']}); first objective of this PR: create it from the local tip of {row['base']} "
+                      f"(`git switch -c {row['branch']} {row['base']}`). That branch is unpushed by design: never wait for its PR, push or merge; "
+                      "STOP only if it is missing locally or lacks the prerequisite commits.")
+        else:
+            branch = f"Branch: {row['branch']} (PR base {row['base']}); first objective of this PR: create it from origin/{row['base']}."
         earlier = objective.get("prerequisites") or [n for n in row["objectives"] if n < number]
+        if first:
+            earlier = sorted(set(earlier) | {o for r in lower for o in r["objectives"]})
         prerequisites = (f"Prerequisites: objective(s) {','.join(map(str, earlier))} committed and tested per the progress file, else STOP."
                          if earlier else "Prerequisites: none.")
         files[names[number - 1]] = assemble(spec, f"{spec['title']} - objective {number}: {objective['title']}", "objective",
@@ -340,7 +442,7 @@ def render(spec, issue, out_dir):
                 ("Objective", objective_section(number, objective)),
                 ("Security", security_lines(spec, number)),
                 ("Validate", f"`{wrap(objective['validate'])}`"),
-                ("Record", f"Commit this objective with explicit paths, update the progress file, report the result and stop. {PROGRESS_FORMAT.format(dir=out_dir, issue=issue)}"),
+                ("Record", f"Commit this objective with explicit paths, update the progress file. {OBJECTIVE_COMPLETION} Report the result and stop. {PROGRESS_FORMAT.format(planning=out_dir, issue=issue)}"),
                 ("Stops", STOP_RULE + " Unmet prerequisites: STOP."),
             ], wait=objective.get("wait"))
 
@@ -350,9 +452,9 @@ def render(spec, issue, out_dir):
          + "\nInspect implemented behavior against the Acceptance map and the full scoped diff."),
         ("Acceptance map", acceptance_map(spec)),
         ("Security", security_lines(spec)),
-        ("Gates", gates_lines(spec)),
-        ("Record", "Record exact branch-tip SHAs, commands, results, environment, review scope, limits and any unvalidated requirement in the progress file, then stop. "
-                   + PROGRESS_FORMAT.format(dir=out_dir, issue=issue)),
+        ("Gates", f"{gates_lines(spec)}\n{scope_check_lines(spec)}"),
+        ("Record", "Record exact branch-tip SHAs, commands, results, environment, review scope and limits in the progress file; set every criteria entry to passing or failing with its evidence, and report any without evidence as unvalidated. " + GATES_COMPLETION + " Then stop. "
+                   + PROGRESS_FORMAT.format(planning=out_dir, issue=issue)),
         ("Stops", STOP_RULE + " Any objective not committed and tested: STOP."),
     ])
     files[names[-1]] = assemble(spec, f"{spec['title']} - ship", "ship", is_sensitive(spec), [
@@ -394,7 +496,7 @@ def run(spec, out, *, replace_existing=False):
     merged = {**existing, **files}
     objectives = len(spec["objectives"]) if spec["layout"] == "phased" else None
     found, warnings, documents = validate(merged, issue, objectives, sensitive=spec["security"]["sensitive"], read_errors=read_errors)
-    result = report(found, warnings, documents)
+    result = report(found, spec_warnings(spec) + warnings, documents)
     if found:
         return {**result, "written": []}
     for name, text in files.items():

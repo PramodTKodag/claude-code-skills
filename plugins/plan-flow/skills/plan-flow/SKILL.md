@@ -28,7 +28,7 @@ Execution edits exactly one repo, the anchor.
 
 - Started inside a submodule: the anchor is that submodule unless the issue clearly belongs elsewhere (then ask).
 - Started at a parent checkout with submodules: pick the owning submodule from the issue; ask if unclear.
-- Read the guidance chain and profile printed by preflight (nearest first; the profile is `.agents/dev-flow-context.md` or `.claude/dev-flow-context.md`: guardrails, downstream consumers, test convention, base branch, `## Decisions`). Resolve base branch, workspace setup, validation commands and security-sensitive paths from them. With no profile, infer from build files and CI config and confirm once; do not guess.
+- Read the guidance chain and profile printed by preflight (nearest first; the profile is `.agents/dev-flow-context.md` or `.claude/dev-flow-context.md`: guardrails, downstream consumers, test convention, base branch). Resolve base branch, workspace setup, validation commands and security-sensitive paths from them. With no profile, infer from build files and CI config and confirm once; do not guess.
 - Submodule not initialized: ask once before `git submodule update --init --depth 1 <path>`; if declined, read through `git show` or `gh api` and label the evidence as remote.
 - `docs/plans` "NOT ignored": ask where handoffs belong (local `.git/info/exclude` entry, a path outside the repo, or accept untracked files). Missing: ask for the planning directory.
 
@@ -49,15 +49,15 @@ Full runs this session on the Deep tier; Light on Standard (tiers and per-tool s
 
 ## Questions
 
-For decisions with a preference dimension, use the host's structured question tool if it has one; otherwise list the options as numbered plain text and wait for the reply. Give 2-4 concrete options, recommended first and marked `(Recommended)` with one short reason. Plain short English. Never treat silence or a preselected option as an answer. Look up discoverable facts yourself. Keep questions to material behavior, architecture, security or delivery choices; record each answer with its why and rejected alternative, and never reopen a settled one.
+Ask every question to the user (anchor, flags, replace, plan check, any doubt) with the host's interactive question tool, never in reply text; no tool: numbered plain text, then wait for the reply. Give 2-4 concrete options, recommended first and marked `(Recommended)` with one short reason. Plain short English. Never treat silence or a preselected option as an answer. Look up discoverable facts yourself. Keep questions to material behavior, architecture, security or delivery choices; record each answer with its why and rejected alternative, and never reopen a settled one.
 
 ## Steps
 
 1. **Orient.** Preflight, anchor repo, guidance chain, profile. Stop if the issue or source cannot be read.
 2. **Investigate.** Read the issue, its comments, linked issues and PRs, and the affected source and tests. Treat the issue as a hypothesis. Pin every fact to the repo SHA and `file:line`; label assumptions and dirty paths. Load [references/planning.md](references/planning.md) for evidence, ownership, security, decision discovery and sizing rules. Run its decision lookup before settling, at either depth.
-3. **Settle.** Root cause, owning component, target behavior, rejected alternatives; trace the flow across repos and list consumers. Grill: batch every question whose prerequisites are settled, each with a recommended answer, until no open question remains. Sensitive work needs a fresh-context review before it is ready (planning.md, "Security review").
-4. **Size.** Choose compact or phased layout from the actual work (planning.md, "Sizing"); settle PR grouping separately and once.
-5. **Plan check (always).** In a few plain sentences: the change, why this layout. List each decision settled beyond what the issue's body and comments already state, one line each; saving posts them to the issue. Ask `Save this plan?` with `Save plan and post decisions (Recommended)` / `Change the plan`; with no new decisions the first option is `Save plan only (Recommended)`. Answer must be explicit.
+3. **Settle.** Root cause, owning component, target behavior, rejected alternatives; trace the flow across repos and list consumers. Grill the user on every open choice; Full depth grills deeper (planning.md, "Grilling"). Sensitive work needs a fresh-context review before it is ready (planning.md, "Security review").
+4. **Size.** Choose compact or phased layout from the actual work (planning.md, "Sizing"); settle PR grouping and, for several PRs, the stack order separately and once.
+5. **Plan check (always).** In a few plain sentences: the change, why this layout, and for several PRs the stack (bottom first, each on the one below). List each decision settled beyond what the issue's body and comments already state, one line each; saving posts them to the issue. Ask `Save this plan?` with `Save plan and post decisions (Recommended)` / `Change the plan`; with no new decisions the first option is `Save plan only (Recommended)`. Answer must be explicit.
 6. **Write.** Load [references/handoff-spec.md](references/handoff-spec.md). If the plan check listed decisions, post them first as one issue comment ("Decision comment"). A decision settled after that post goes in one follow-up comment; never post a decision twice. Pipe one JSON spec to the renderer; it routes each fact to the files that need it, adds the fixed executor rules, validates in memory and writes only if valid:
 
    ```sh
@@ -68,11 +68,11 @@ For decisions with a preference dimension, use the host's structured question to
 
    Fix reported errors in the spec and rerun; no hand-edited output. Existing files: ask, then add `--replace-existing`. Files of another layout for the same issue (including an old `<issue>-implementation-prompt.md`) are the user's to resolve; never delete them.
 7. **Judge.** The validator checks structure only. Apply [references/quality-checks.md](references/quality-checks.md) for what it cannot judge.
-8. **Report.** Outcome, caveats, the ordered execution workflow, every saved path, the decision comment URL. Compact: one new session. Phased: one session per objective, then gates, then ship; unmet prerequisite means STOP. Tell the user to run the gate commands themselves and paste the gates file only if a gate fails or the work is sensitive. The user merges PRs. Say `Planning complete. No implementation performed.` Compare `git status` with preflight, ignoring the written files; report any other change and stop.
+8. **Report.** Outcome, caveats, the ordered execution workflow, every saved path, the decision comment URL. Compact: one new session. Phased: one session per objective, then gates, then ship; unmet prerequisite means STOP. Stacked PRs build bottom-up as local branches; only ship pushes and opens them, so no PR is needed between objectives. The executor's progress file lives in the planning directory beside the handoffs. The user merges PRs. Say `Planning complete. No implementation performed.` Compare `git status` with preflight, ignoring the written files; report any other change and stop.
 
 ## Outcomes other than ready
 
-Stop before the plan check and report plainly, writing no ready handoff: already fixed, cannot reproduce, needs information, wrong repo, duplicate. A blocked plan (missing access, unavailable required review) is labelled blocked with the exact blocker, never presented as ready.
+Stop before the plan check, report plainly and write no ready handoff, then ask the way forward (Questions; e.g. re-scope, other repo, close): already fixed, cannot reproduce, needs information, wrong repo, duplicate. A blocked plan (missing access, unavailable required review) is labelled blocked with the exact blocker, never presented as ready; ask the way forward the same way.
 
 ## Economy
 

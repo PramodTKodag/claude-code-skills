@@ -2,7 +2,7 @@
 
 Contents: Before saying ready · Maintaining this skill
 
-The renderer and validator already enforce: layout completeness, placeholders, header fields, issue URL, Base format, matching Compatibility, AC and S coverage and verbatim S text, `pipefail` on piped commands, absolute Workspace paths, leading STOP for waits, one PR row per objective with one `Closes`, and soft size budgets. Do not re-check those by hand. Judge only what a script cannot.
+The renderer and validator already enforce: layout completeness, placeholders, header fields, issue URL, Base format, matching Compatibility, AC and S coverage and verbatim S text, `pipefail` on piped commands, absolute Workspace paths, leading STOP for waits, one PR row per objective with one `Closes`, soft size budgets and a soft warning when criteria outnumber four per objective. Do not re-check those by hand. Judge only what a script cannot.
 
 ## Before saying ready
 
@@ -13,7 +13,7 @@ The renderer and validator already enforce: layout completeness, placeholders, h
 - Every issue acceptance criterion maps to a verifiable outcome; named tests exist or name a new file in a verified parent.
 - Security: all touched controls are covered, S text states the actual requirement, sensitive plans have a completed fresh-context review with P0/P1 resolved.
 - Conditional gates match the repo's path-triggered checks.
-- Governing decisions were followed, earlier register before later, from a lookup run in this session; coverage limits are stated, not "none found".
+- Governing decisions were followed, from a lookup of the repo's `decisions/` folder run in this session; coverage limits are stated, not "none found".
 - Compatibility matches the chosen mode, and greenfield overrides no accepted decision, control or immutable state.
 - PR grouping, base branches and branch names match repo policy. Rollback is real for this change.
 - Each file stands alone: an executor with only that file and the repo can start, stop and report correctly.

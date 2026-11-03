@@ -112,7 +112,7 @@ its `/brainstorming`, `/writing-plans`, `/executing-plans`, and TDD skills slot 
 
 `plan-flow` does everything *before* implementation. Give it a GitHub issue and it reads the real
 code, traces cross-repo consumers, audits security, checks the repo's recorded decisions, grills you
-on open choices, and writes validated handoff files that separate coding sessions (any AI tool)
+on open choices, one question at a time, and writes validated handoff files that separate coding sessions (any AI tool)
 execute. It never edits product code, and needs `python3` for its bundled scripts.
 
 ```text
@@ -134,18 +134,20 @@ execute. It never edits product code, and needs `python3` for its bundled script
   objective, `<issue>-exec-gates.md` and `<issue>-exec-ship.md`, all in `docs/plans/` (or the directory
   you approve). Paste each into a new coding session in order. The renderer adds fixed executor rules,
   so every file states its own scope, freshness check, stops and security controls. Gate evidence must
-  match the branch tip, and the executor posts any unplanned choice as an `Execution decision:` comment.
-- **Decisions.** Reads your ADR registers at a pinned ref, fetched first: the `## Decisions` section of
-  `.agents/dev-flow-context.md` or `.claude/dev-flow-context.md` (backticked `path[@ref]` bullets, in
-  binding order), else `docs/decisions`, `docs/adr`, `adr` and similar. Accepted binds, Proposed asks,
-  Superseded points to its replacement, and coverage gaps are stated, never read as "none found".
+  match the branch tip, the executor must prove its tests ran and keep inside the planned files, and it
+  posts any unplanned choice as an `Execution decision:` comment and each finished phase as an
+  `Execution complete:` comment. Progress lives in `<issue>-plan-progress.json` beside the handoffs.
+- **Decisions.** Reads only the repo's own `decisions/` folder, from the default branch, fetched first;
+  decisions in other repos or folders are never read. Accepted binds, Proposed asks, Superseded points
+  to its replacement, and coverage gaps are stated, never read as "none found".
 - **Compatibility.** The default assumes existing consumers and data, so breaking changes get a
   migration or rollout path. `--greenfield` drops that work but never overrides an accepted decision,
   weakens a control or redeploys immutable state.
 - **Presets.** `Full` (default) plans on a deep-reasoning model; `--light` runs on a mid-tier one and
   stops to ask if it finds a sensitive path, a consumed contract or an architecture decision.
 - **PR split.** With two or more objectives it asks once: one PR, one PR per objective, or a custom
-  split. Stacked PRs merge in order; `Closes` fires only for PRs merged into the default branch.
+  split. Several PRs form a stack planned up front: foundations at the bottom, `Closes` on the top, built
+  bottom-up as local branches and pushed only at ship. You merge bottom-up.
 - **Pairs with `impl-issue`.** An issue carrying `Verified at: <repo>@<sha>` lets `plan-flow` skip
   re-reading paths unchanged since that commit.
 - **Context.** Reads `AGENTS.md` / `CLAUDE.md` and, if present, the `dev-flow` profile; otherwise it

@@ -9,7 +9,7 @@ import tempfile
 import unittest
 
 from handoff_common import TOKEN_BUDGET, est_tokens
-from render_handoff import PHASE_RULE, RULES, check_spec, render, run
+from render_handoff import PHASE_RULE, PROGRESS_FORMAT, RULES, check_spec, render, run, spec_warnings
 
 SPECS = Path(__file__).resolve().parent.parent / "evals" / "specs"
 RENDERER = Path(__file__).with_name("render_handoff.py")
@@ -74,6 +74,38 @@ class SpecChecks(unittest.TestCase):
         self.assertSpecRejected(lambda s: s["pr_rows"].append(dict(s["pr_rows"][0])), "objective 1 must be in exactly one row (found 2)")
         self.assertSpecRejected(lambda s: s["pr_rows"][0].update(keyword="Fixes"), "keyword")
         self.assertSpecRejected(lambda s: s["pr_rows"][0].update(branch="has space"), "branch")
+
+    def test_stacked_rows_form_one_chain_from_the_trunk(self):
+        self.assertSpecRejected(lambda s: s["pr_rows"][1].update(base="not-a-row"),
+                                "base must be dev or the branch of an earlier row", "multi-pr")
+
+        def branch_the_stack(spec):
+            spec["pr_rows"][0]["objectives"] = [1]
+            spec["pr_rows"].insert(1, {"branch": "fix/other", "base": spec["pr_rows"][0]["branch"], "objectives": [2], "keyword": "Refs"})
+        self.assertSpecRejected(branch_the_stack, "a stack is one chain", "multi-pr")
+
+        self.assertSpecRejected(lambda s: s["pr_rows"].append(dict(s["pr_rows"][1], objectives=[9])), "repeats branch", "multi-pr")
+
+    def test_stacked_objectives_build_upward_and_close_on_the_top(self):
+        def lower_work_after_upper(spec):
+            spec["pr_rows"][0]["objectives"] = [2, 3]
+            spec["pr_rows"][1]["objectives"] = [1]
+            spec["objectives"][2].pop("prerequisites")
+        self.assertSpecRejected(lower_work_after_upper, "must all come after the objectives of the PR(s) it stacks on", "multi-pr")
+
+        def close_on_the_bottom(spec):
+            spec["pr_rows"][0]["keyword"], spec["pr_rows"][1]["keyword"] = "Closes", "Refs"
+        self.assertSpecRejected(close_on_the_bottom, "Closes belongs on the top of the stack", "multi-pr")
+
+        self.assertSpecRejected(lambda s: s["objectives"][0].update(prerequisites=[3]),
+                                "objective 3 is not in this PR or a PR it stacks on", "multi-pr")
+
+    def test_many_criteria_for_little_work_is_a_warning_not_an_error(self):
+        spec = sample("compact-bounded")
+        self.assertEqual(spec_warnings(spec), [])
+        spec["acceptance"] += [{"id": f"AC{n}", "text": "extra", "objectives": [1]} for n in range(10, 15)]
+        self.assertEqual(check_spec(spec), [])
+        self.assertTrue(any("criteria for 1 objective(s)" in w for w in spec_warnings(spec)))
 
     def test_objective_fields_and_wait(self):
         self.assertSpecRejected(lambda s: s["objectives"][0].pop("tests"), "tests:")
@@ -159,8 +191,81 @@ class RoutingAndTokenDiscipline(unittest.TestCase):
         self.assertIn("Prerequisites: none.", files["63-exec-obj-1.md"])
         self.assertIn("reuse the existing branch", files["63-exec-obj-2.md"])
         self.assertIn("objective(s) 1 committed and tested", files["63-exec-obj-2.md"])
-        self.assertIn("create it from origin/fix/rounding-core", files["63-exec-obj-3.md"])
+        stacked = files["63-exec-obj-3.md"]
+        self.assertIn("create it from the local tip of fix/rounding-core", stacked)
+        self.assertIn("`git switch -c test/rounding-e2e fix/rounding-core`", stacked)
+        self.assertIn("unpushed by design: never wait for its PR, push or merge", stacked)
+        self.assertNotIn("origin/fix/rounding-core", stacked)
+        self.assertIn("objective(s) 1,2 committed and tested", stacked)
+
+    def test_stacked_row_inherits_the_objectives_of_the_row_below_as_prerequisites(self):
+        spec = sample("multi-pr")
+        del spec["objectives"][2]["prerequisites"]
+        files = render(spec, "63", "/work/plans")
         self.assertIn("objective(s) 1,2 committed and tested", files["63-exec-obj-3.md"])
+
+    def test_only_a_stacked_ship_file_carries_the_stack_steps(self):
+        _, stacked = files_for("multi-pr")
+        _, single = files_for("phased-related-flows")
+        self.assertIn("Stack: rows are one chain, bottom first", stacked["63-exec-ship.md"])
+        self.assertIn("git rebase --onto origin/dev", stacked["63-exec-ship.md"])
+        self.assertIn("`gh stack init -b dev <row branches in order>`, then `gh stack submit --auto`", stacked["63-exec-ship.md"])
+        self.assertIn("marks them ready before `gh stack merge`", stacked["63-exec-ship.md"])
+        self.assertIn("`gh pr create --draft --base <row base>`", stacked["63-exec-ship.md"])
+        self.assertNotIn("Stack:", single["21-exec-ship.md"])
+
+    def test_every_file_forbids_test_tampering_and_fake_passes(self):
+        for name in ("compact-bounded", "multi-pr"):
+            _, files = files_for(name)
+            for filename, text in files.items():
+                with self.subTest(f"{name}/{filename}"):
+                    self.assertIn("Never delete, skip or weaken a test or assertion to get green", text)
+                    self.assertIn("`no tests to run`, a zero count or an unmatched filter is a failure", text)
+
+    def test_progress_file_is_json_with_one_criteria_entry_shape(self):
+        text = PROGRESS_FORMAT.format(planning="/work/plans", issue="63")
+        self.assertIn("/work/plans/63-plan-progress.json", text)
+        shape = json.loads(text[text.index("{"):text.rindex("}") + 1])
+        self.assertEqual(sorted(shape), ["comments", "criteria", "decisions", "done", "findings", "gates", "next", "prs"])
+        self.assertEqual(shape["criteria"]["<AC id>"], {"status": "pending", "evidence": ""})
+        self.assertIn("Edit values only, never remove or rename keys", text)
+
+    def test_gates_and_ship_demand_evidence_per_criterion(self):
+        _, files = files_for("multi-pr")
+        self.assertIn("set every criteria entry to passing or failing with its evidence", files["63-exec-gates.md"])
+        self.assertIn("Every criteria entry in the progress file must be `passing` with evidence", files["63-exec-ship.md"])
+        self.assertIn("Report gaps first (criteria not passing", files["63-exec-ship.md"])
+
+    def test_scope_check_lists_one_command_per_pr_in_gates_and_compact_files(self):
+        _, phased = files_for("multi-pr")
+        _, compact = files_for("compact-bounded")
+        gates = phased["63-exec-gates.md"]
+        self.assertIn("- PR1 scope: `git diff --name-only origin/dev...fix/rounding-core -- . ':!src/pricing/round.py' ':!src/display/format.py'`", gates)
+        self.assertIn("- PR2 scope: `git diff --name-only fix/rounding-core...test/rounding-e2e -- . ':!tests/e2e/test_totals.py'`", gates)
+        self.assertIn("- PR1 scope: `git diff --name-only origin/dev...fix/parse-id", compact["17-exec.md"])
+        for text in (phased["63-exec-obj-1.md"], phased["63-exec-ship.md"]):
+            self.assertNotIn("scope: `git diff", text)
+
+    def test_scope_check_command_prints_only_paths_the_plan_did_not_name(self):
+        _, files = files_for("compact-bounded")
+        line = next(l for l in files["17-exec.md"].splitlines() if l.startswith("- PR1 scope:"))
+        command = line.split("`")[1]
+        with tempfile.TemporaryDirectory() as repo:
+            def git(*args):
+                subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@example.com", *args], cwd=repo, check=True, capture_output=True)
+            git("init", "-q", "-b", "dev")
+            Path(repo, "README.md").write_text("base\n")
+            git("add", "README.md")
+            git("commit", "-q", "-m", "base")
+            git("update-ref", "refs/remotes/origin/dev", "HEAD")
+            git("switch", "-q", "-c", "fix/parse-id")
+            for path in ("src/parse.py", "tests/test_parse.py", "Package.resolved"):
+                Path(repo, path).parent.mkdir(parents=True, exist_ok=True)
+                Path(repo, path).write_text("x\n")
+            git("add", "-A")
+            git("commit", "-q", "-m", "work")
+            out = subprocess.run(command, shell=True, cwd=repo, capture_output=True, text=True, check=True).stdout
+        self.assertEqual(out.split(), ["Package.resolved"])
 
     def test_external_wait_opens_the_file(self):
         _, files = files_for("external-wait")
@@ -196,16 +301,46 @@ class RoutingAndTokenDiscipline(unittest.TestCase):
                     self.assertIn("never repost", text)
         _, phased = files_for("phased-indivisible")
         ship = phased["33-exec-ship.md"]
-        self.assertIn("decision comments (Rules) are standing", ship)
+        self.assertIn("decision and completion comments (Rules) are standing", ship)
         self.assertNotIn("post one concise decision record", ship)
         self.assertNotIn("No push or PR, issue comment", phased["33-exec-gates.md"])
+
+    def test_every_phase_posts_one_completion_comment_only_when_its_work_is_done(self):
+        _, phased = files_for("phased-indivisible")
+        for name, text in phased.items():
+            with self.subTest(name):
+                self.assertIn("- Completion comment: once this phase's work is fully done (never partial", text)
+                self.assertIn("A stop or failure posts nothing", text)
+        self.assertIn("Completion comment (Rules) after the commit and passing validation", phased["33-exec-obj-1.md"])
+        self.assertIn("Completion comment (Rules) after every criteria entry is set", phased["33-exec-gates.md"])
+        self.assertIn("Completion comment (Rules), once every PR row is open", phased["33-exec-ship.md"])
+        _, compact = files_for("compact-bounded")
+        text = next(iter(compact.values()))
+        self.assertIn("Completion comment (Rules) after the commit and passing validation", text)
+        self.assertIn("Completion comment (Rules) after every criteria entry is set", text)
+        self.assertIn("Completion comment (Rules), once every PR row is open", text)
 
     def test_cleanup_lists_the_files_actually_written(self):
         _, files = files_for("phased-indivisible", "/tmp/plans dir")
         cleanup = files["33-exec-ship.md"].split("## Cleanup")[1]
         for name in files:
             self.assertIn(f"/tmp/plans dir/{name}", cleanup)
-        self.assertIn("/tmp/plans dir/33-plan-progress.md", cleanup)
+        self.assertIn("/tmp/plans dir/33-plan-progress.json", cleanup)
+
+    def test_progress_file_lives_in_the_planning_directory(self):
+        _, files = files_for("phased-indivisible", "/tmp/plans dir")
+        for name, text in files.items():
+            self.assertNotIn("/work/service/33-plan-progress.json", text, name)
+        self.assertIn("Progress file `/tmp/plans dir/33-plan-progress.json`", files["33-exec-obj-1.md"])
+
+    def test_every_phase_asks_through_the_interactive_question_rule(self):
+        _, files = files_for("phased-indivisible")
+        for name, text in files.items():
+            self.assertIn("- Questions: ask only via the host's interactive question tool", text, name)
+            self.assertIn("recommended first", text, name)
+            self.assertIn("ask the way forward (Questions)", text, name)
+            self.assertIn("never wait silently", text, name)
+        self.assertIn("ask `Push and open PRs (Recommended)` / `Hold`", files["33-exec-ship.md"])
 
     def test_sample_files_stay_inside_their_token_budgets(self):
         kinds = {"exec.md": "compact", "gates.md": "gates", "ship.md": "ship"}

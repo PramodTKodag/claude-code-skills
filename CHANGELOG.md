@@ -6,6 +6,28 @@ minor/patch semantics are loose while it's greenfield.
 
 ## [Unreleased]
 
+### Changed
+- **plan-flow — decisions come only from the repo.** The lookup reads the anchor repo's own `decisions/`
+  folder from its default branch (fetched first) and nothing else. `--register`, the dev-flow profile
+  `## Decisions` section, auto-detected folders and sibling-checkout registers are removed.
+- **plan-flow — grilling.** Every plan settles open design choices one question at a time through the
+  interactive question tool; Full depth adds a design-branch list, an evidence challenge and a
+  restate-to-confirm step. Batched questions are gone.
+- **plan-flow — blockers ask the way forward.** Early exits, blocked plans and executor stops ask for the
+  way forward instead of ending silently.
+
+### Added
+- **plan-flow — stacked PRs planned up front.** `pr_rows` must form one chain (each base the trunk or an
+  earlier row, `Closes` on the top). Upper objectives branch from the local tip of the branch below and
+  never wait for a lower PR; the ship file pushes in row order and uses the official `github/gh-stack`
+  extension when present.
+- **plan-flow — executor evidence.** A run passes only if its output shows the expected tests ran (no
+  zero-test pass, no weakened tests); `<issue>-plan-progress.json` tracks one criteria entry per
+  acceptance ID with evidence; gates and compact files carry a per-PR scope command; the renderer warns
+  when criteria outnumber four per objective.
+- **plan-flow — completion comments.** Each finished executor phase posts one `Execution complete: <phase>`
+  issue comment; stopped, failed or held phases post none.
+
 ## [0.6.0] - 2026-10-27
 
 ### Changed

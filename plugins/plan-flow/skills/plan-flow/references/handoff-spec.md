@@ -1,6 +1,6 @@
 # Handoff spec
 
-Contents: Fields · Rules · Decision comment · Output · Examples
+Contents: Fields · Rules · Decision comment · Output · Executor evidence · Completion comments · Examples
 
 One JSON object on stdin to `render_handoff.py`. Every fact appears once; the renderer copies it to the files that need it. All text fields are single lines. The renderer rejects anything missing or malformed with a field-named error.
 
@@ -27,7 +27,7 @@ One JSON object on stdin to `render_handoff.py`. Every fact appears once; the re
 | `rules` | string[]? | extra binding rules for every file |
 | `objectives` | object[] | `{title, files[], tests[], action, validate, prerequisites?[n], wait?{on, check, resume}}` |
 | `gates` | object | `commands[]`; `conditional?[{when, command}]` |
-| `pr_rows` | object[] | `{branch, base, objectives[n], keyword:"Closes"/"Refs"}`; each objective in exactly one row; exactly one `Closes` |
+| `pr_rows` | object[] | `{branch, base, objectives[n], keyword:"Closes"/"Refs"}`, bottom first; each objective in exactly one row; exactly one `Closes`. `base` is the base branch or an earlier row's branch (a stack is one chain); a stacked row's objectives all come after its base row's, and `Closes` sits on the top row |
 | `follow_up` | string | consumer search result and any follow-up |
 | `rollback` | string | how to undo |
 
@@ -35,6 +35,7 @@ One JSON object on stdin to `render_handoff.py`. Every fact appears once; the re
 
 ## Rules
 
+- `prerequisites` may name only objectives in the same row or a row it stacks on; the first objective of a stacked row inherits all objectives below it automatically.
 - Evidence `at` is `path` or `path:line`; the renderer builds each file's Freshness command from its own evidence paths.
 - `validate` and every `gates.commands` entry are bare commands; the renderer wraps them as `set -o pipefail; <cmd> 2>&1 | tail -n 60`.
 - `S<n>` control text is copied verbatim into every objective it tags, plus gates and ship. Write it once, exactly.
@@ -58,9 +59,22 @@ Posted right after the explicit save answer and before the renderer runs. Render
 | compact | `<issue>-exec.md` |
 | phased | `<issue>-exec-obj-<n>.md` per objective, `<issue>-exec-gates.md`, `<issue>-exec-ship.md` |
 
-The progress file `<issue>-plan-progress.md` is created by the executor in the same directory and is never written here.
+The progress file `<issue>-plan-progress.json` is created by the executor in the same directory and is never written here.
 
-Estimated sizes (chars/4, not measured tokens): compact about 1.6k; objective files about 1k each; ship about 1.6k. A soft over-budget warning means trim prose or re-check sizing, never drop a fact, control, test or stop.
+Estimated sizes (chars/4, not measured tokens): compact about 2.2k; objective files about 1.5k each; gates about 1.6k; ship about 2.0k. A soft over-budget warning means trim prose or re-check sizing, never drop a fact, control, test or stop.
+
+## Executor evidence
+
+- Every file carries the Tests rule: a run passes only if its output shows the expected tests ran and passed (no zero-test or unmatched-filter pass), and no test or assertion is deleted, skipped or weakened to get green.
+- The executor keeps `<issue>-plan-progress.json` in the planning directory: fixed keys (including `comments`, the posted completion comment IDs), values only edited, one `criteria` entry per Acceptance ID (`pending`, then `passing` or `failing` with evidence). Gates fill the evidence; ship refuses unvalidated criteria.
+- Gates and compact files carry one `git diff --name-only` scope command per PR row, built from the row's objective `files`; any path it prints is justified or reverted.
+- The renderer reports a soft warning when acceptance criteria exceed four per objective.
+
+## Completion comments
+
+- Each objective file, the gates file and the ship file posts one `Execution complete: <phase>` issue comment, only once that phase's work is fully done: objective after commit and passing validation, gates after every criteria entry is set, ship after every PR row is open. A compact file posts one per stage (objective, gates, ship).
+- A stop, failure or `Hold` posts nothing. The ID goes under `comments` in the progress file; a resumed run never reposts.
+- Content is what was done (SHAs, tests, results, PR URLs, gaps), under the same public-text rules as decision comments. Never edits the issue body or earlier comments.
 
 ## Examples
 

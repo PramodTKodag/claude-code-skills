@@ -7,7 +7,7 @@ import sys
 import tempfile
 import unittest
 
-from decisions_lookup import FILE_RE, TOP_FIRST, key_of, parse_decision, resolve, split_ref
+from decisions_lookup import FILE_RE, TOP_CANDIDATES, key_of, parse_decision, resolve
 
 LOOKUP = Path(__file__).with_name("decisions_lookup.py")
 GIT = ["git", "-c", "user.name=test", "-c", "user.email=test@example.com", "-c", "core.hooksPath=/dev/null",
@@ -44,15 +44,15 @@ def commit_all(repo):
 
 
 def seed_register(seed, filler=10):
-    write(seed, "docs/decisions/README.md", README)
-    write(seed, "docs/decisions/0001-queue-ordering.md", adr(1, "Queue ordering", "Accepted"))
-    write(seed, "docs/decisions/0002-legacy-llama-routing.md", adr(2, "Legacy llama routing", "Superseded by [0003](0003-provider-neutral-llama-routing.md)"))
-    write(seed, "docs/decisions/0003-provider-neutral-llama-routing.md", adr(3, "Provider neutral llama routing", "Accepted"))
-    write(seed, "docs/decisions/0004-giraffe-telemetry-export.md", adr(4, "Giraffe telemetry export", "Proposed"))
-    write(seed, "docs/decisions/0005-okapi-retry-budget.md", adr(5, "Okapi retry budget", "Deprecated"))
-    write(seed, "docs/decisions/0010-orphan-file.md", adr(10, "Orphan file", "Accepted"))
+    write(seed, "decisions/README.md", README)
+    write(seed, "decisions/0001-queue-ordering.md", adr(1, "Queue ordering", "Accepted"))
+    write(seed, "decisions/0002-legacy-llama-routing.md", adr(2, "Legacy llama routing", "Superseded by [0003](0003-provider-neutral-llama-routing.md)"))
+    write(seed, "decisions/0003-provider-neutral-llama-routing.md", adr(3, "Provider neutral llama routing", "Accepted"))
+    write(seed, "decisions/0004-giraffe-telemetry-export.md", adr(4, "Giraffe telemetry export", "Proposed"))
+    write(seed, "decisions/0005-okapi-retry-budget.md", adr(5, "Okapi retry budget", "Deprecated"))
+    write(seed, "decisions/0010-orphan-file.md", adr(10, "Orphan file", "Accepted"))
     for n in range(filler):
-        write(seed, f"docs/decisions/{100 + n:04d}-filler.md", adr(100 + n, f"Filler topic{n}", "Accepted"))
+        write(seed, f"decisions/{100 + n:04d}-filler.md", adr(100 + n, f"Filler topic{n}", "Accepted"))
 
 
 def make_service(root, filler=10):
@@ -69,16 +69,6 @@ def make_service(root, filler=10):
     return seed, service
 
 
-def make_sibling(root):
-    """A second checkout with an ADR-prefixed register and no remote."""
-    sibling = root / "platform"
-    sibling.mkdir()
-    git(sibling, "init", "-q", "-b", "main")
-    write(sibling, "docs/adr/ADR-0001-llama-retry-budget.md", adr(1, "Llama retry budget", "Accepted"))
-    commit_all(sibling)
-    return sibling
-
-
 def lookup(cwd, terms, *flags, fetch=False):
     argv = [sys.executable, str(LOOKUP), *([] if fetch else ["--no-fetch"]), *flags]
     done = subprocess.run(argv, cwd=cwd, input=terms, capture_output=True, text=True, check=False, env=ENV)
@@ -93,11 +83,10 @@ class LookupTests(unittest.TestCase):
         self.root = Path(self.temp.name).resolve()
         self.seed, self.service = make_service(self.root)
 
-    def test_auto_detects_the_usual_register_and_reads_the_remote_default(self):
+    def test_reads_the_decisions_folder_at_the_remote_default(self):
         out = lookup(self.service, "queue ordering zebra")
-        self.assertIn("registers from auto-detected directories", out)
-        self.assertIn("Tier 1 - docs/decisions", out)
-        self.assertIn("0001 [Accepted] Queue ordering | docs/decisions/0001-queue-ordering.md", out)
+        self.assertIn("Repo decisions - decisions/", out)
+        self.assertIn("0001 [Accepted] Queue ordering | decisions/0001-queue-ordering.md", out)
         self.assertIn("origin/main@", out)
         self.assertIn("(fetch skipped)", out)
 
@@ -113,12 +102,12 @@ class LookupTests(unittest.TestCase):
 
     def test_readme_and_file_mismatches_are_reported(self):
         out = lookup(self.service, "zebra queue ordering")
-        self.assertIn("0009-ghost.md listed in docs/decisions/README.md but no file", out)
-        self.assertIn("0010-orphan-file.md has no docs/decisions/README.md row", out)
+        self.assertIn("0009-ghost.md listed in decisions/README.md but no file", out)
+        self.assertIn("0010-orphan-file.md has no decisions/README.md row", out)
 
     def test_fetch_reads_latest_origin_instead_of_a_stale_checkout(self):
-        (self.seed / "docs/decisions/0004-giraffe-telemetry-export.md").unlink()
-        write(self.seed, "docs/decisions/0020-capybara-quota.md", adr(20, "Capybara quota", "Accepted"))
+        (self.seed / "decisions/0004-giraffe-telemetry-export.md").unlink()
+        write(self.seed, "decisions/0020-capybara-quota.md", adr(20, "Capybara quota", "Accepted"))
         commit_all(self.seed)
         git(self.seed, "push", "-q", "origin", "main")
         out = lookup(self.service, "capybara quota giraffe telemetry", fetch=True)
@@ -127,63 +116,45 @@ class LookupTests(unittest.TestCase):
         self.assertIn("(fetched)", out)
         self.assertIn("working tree differs from origin/main in 2 file(s)", out)
 
-    def test_explicit_ref_pins_the_read(self):
-        write(self.service, "docs/decisions/0030-ostrich-cache.md", adr(30, "Ostrich cache", "Accepted"))
+    def test_other_folders_and_options_are_never_read(self):
+        write(self.service, "docs/adr/ADR-0001-llama-retry-budget.md", adr(1, "Llama retry budget", "Accepted"))
+        write(self.service, ".claude/dev-flow-context.md", "# Profile\n\n## Decisions\n\n- Other: `docs/adr`\n")
         commit_all(self.service)
-        self.assertNotIn("0030", lookup(self.service, "ostrich cache"))
-        self.assertIn("0030 [Accepted]", lookup(self.service, "ostrich cache", "--register", "docs/decisions@HEAD"))
+        git(self.service, "push", "-q", "origin", "HEAD:main")
+        out = lookup(self.service, "llama retry routing", fetch=True)
+        self.assertNotIn("ADR-0001", out)
+        self.assertIn("0003 [Accepted]", out)
+        refused = subprocess.run([sys.executable, str(LOOKUP), "--register", "../other"], cwd=self.service, input="queue",
+                                 capture_output=True, text=True, check=False, env=ENV)
+        self.assertNotEqual(refused.returncode, 0)
 
-    def test_unknown_or_option_like_ref_falls_back_to_the_working_tree_and_says_so(self):
-        for ref in ("no-such-ref", "--output=x"):
-            with self.subTest(ref=ref):
-                out = lookup(self.service, "queue ordering", "--register", f"docs/decisions@{ref}")
-                self.assertIn(f"working tree (ref {ref} not found)", out)
-                self.assertIn("0001 [Accepted]", out)
-
-    def test_register_flags_order_tiers_across_checkouts(self):
-        sibling = make_sibling(self.root)
-        out = lookup(self.service, "llama retry routing", "--register", str(sibling / "docs/adr"), "--register", "docs/decisions")
-        order = [out.index(marker) for marker in ("Tier 1", "ADR-0001", "Tier 2", "0003 [Accepted]")]
-        self.assertEqual(order, sorted(order))
-        self.assertIn("working tree (no origin ref)", out)
-
-    def test_profile_decisions_section_configures_registers_and_flags_override_it(self):
-        sibling = make_sibling(self.root)
-        write(self.service, ".claude/dev-flow-context.md",
-              f"# Profile\n\n## Decisions\n\n- Platform: `{sibling / 'docs/adr'}`\n- Own: `docs/decisions@origin/main`\n\n## Other\n\n- `ignored/path`\n")
-        out = lookup(self.service, "llama retry routing")
-        self.assertIn("registers from profile `## Decisions`", out)
-        self.assertLess(out.index("ADR-0001"), out.index("0003 [Accepted]"))
-        self.assertNotIn("ignored/path", out)
-        flagged = lookup(self.service, "llama retry routing", "--register", "docs/decisions")
-        self.assertIn("registers from --register flags", flagged)
-        self.assertNotIn("ADR-0001", flagged)
-
-    def test_register_outside_any_checkout_is_a_stated_gap(self):
-        loose = self.root / "loose"
-        loose.mkdir()
-        out = lookup(self.service, "queue ordering", "--register", str(loose / "adr"))
-        self.assertIn("UNAVAILABLE", out)
-        self.assertIn("not inside a git checkout", out)
-
-    def test_no_register_is_a_stated_gap(self):
+    def test_repo_without_a_decisions_folder_is_a_stated_gap(self):
         bare = self.root / "bare"
         bare.mkdir()
         git(bare, "init", "-q", "-b", "main")
+        write(bare, "docs/adr/0001-queue-ordering.md", adr(1, "Queue ordering", "Accepted"))
+        commit_all(bare)
         out = lookup(bare, "queue ordering")
-        self.assertIn("no decision register configured or found", out)
+        self.assertIn("no decision files found", out)
         self.assertIn("do not claim decision coverage", out)
+        self.assertNotIn("0001 [Accepted]", out)
+
+    def test_outside_a_repository_nothing_is_read(self):
+        loose = self.root / "loose"
+        loose.mkdir()
+        out = lookup(loose, "queue ordering")
+        self.assertIn("no decisions were read", out)
 
     def test_no_terms_asks_for_terms(self):
         self.assertIn("no terms on stdin", lookup(self.service, ""))
 
     def test_output_is_capped(self):
-        for n in range(TOP_FIRST + 8):
-            write(self.service, f"docs/decisions/{200 + n:04d}-quokka.md", adr(200 + n, f"Quokka policy{n}", "Accepted"))
+        for n in range(TOP_CANDIDATES + 8):
+            write(self.service, f"decisions/{200 + n:04d}-quokka.md", adr(200 + n, f"Quokka policy{n}", "Accepted"))
         commit_all(self.service)
         git(self.service, "push", "-q", "origin", "HEAD:main")
         out = lookup(self.service, "quokka", fetch=True)
-        self.assertEqual(out.count("  - 02"), TOP_FIRST)
+        self.assertEqual(out.count("  - 02"), TOP_CANDIDATES)
 
     def test_lexical_only_caveat_is_always_printed(self):
         self.assertIn("absence of a hit is not proof", lookup(self.service, "zzzunmatched"))
@@ -211,10 +182,6 @@ class ParsingTests(unittest.TestCase):
         pool = [parse_decision("0007", "s", "p.md", "# 7. T\n\n## Status\n\nAccepted\n")]
         self.assertIs(resolve("ADR-0007", pool), pool[0])
         self.assertIsNone(resolve("ADR-0008", pool))
-
-    def test_split_ref(self):
-        self.assertEqual(split_ref("docs/adr@origin/main"), ("docs/adr", "origin/main"))
-        self.assertEqual(split_ref("docs/adr"), ("docs/adr", ""))
 
     def test_status_styles(self):
         cases = {

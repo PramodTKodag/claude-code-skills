@@ -12,7 +12,7 @@ SECTIONS = {
 # Soft per-file budgets in estimated tokens (chars / 4), about twice what the sample specs in
 # evals/specs render to. A file over budget is a signal to trim prose or re-check sizing,
 # never a reason to drop a fact, control, test or stop.
-TOKEN_BUDGET = {"compact": 3200, "objective": 2200, "gates": 1800, "ship": 2600}
+TOKEN_BUDGET = {"compact": 4000, "objective": 2400, "gates": 2500, "ship": 3400}
 
 EXEC_MARKER = "This is an execution prompt."
 EXEC_SENTENCE = (
