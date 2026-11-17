@@ -17,7 +17,7 @@ jobs:
           persist-credentials: false
 
       # HOL plugin scanner: fails below 80/100 or on any high/critical finding.
-      - uses: hashgraph-online/ai-plugin-scanner-action@ac513da02cd2d28e6da5593e55add3f5b4cdce1e # v1.2.767
+      - uses: hashgraph-online/ai-plugin-scanner-action@013b123a036a252a6d74ddb52836ee923498150c # v1.2.817
         with:
           plugin_dir: "."
           min_score: 80
